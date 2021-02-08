@@ -129,7 +129,7 @@ class renderer_base {
                 // Don't allow the JavaScript helper to be executed from within another
                 // helper. If it's allowed it can be used by users to inject malicious
                 // JS into the page.
-                'disallowednestedhelpers' => ['js']));
+                'blacklistednestedhelpers' => ['js']));
 
         }
 
@@ -336,7 +336,18 @@ class renderer_base {
         global $CFG;
         $logo = get_config('core_admin', 'logo');
         if (empty($logo)) {
-            return false;
+        	// UPDATED 20210125 - DM
+			$filename = '/var/www/moodle/wellfiles/partnerlogo.png';
+			if (file_exists($filename)) {
+				// This may exist if course cloud has provided
+				return ("/wellfiles/partnerlogo.png");
+			}
+			else {
+				// This is always in the build
+				return ("/wellfiles/relaytrust.png");
+			}	
+			// End Update
+            //return false;
         }
 
         // 200px high is the default image size which should be displayed at 100px in the page to account for retina displays.
@@ -361,7 +372,18 @@ class renderer_base {
         global $CFG;
         $logo = get_config('core_admin', 'logocompact');
         if (empty($logo)) {
-            return false;
+        	// UPDATED 20210125 - DM
+			$filename = '/var/www/moodle/wellfiles/partnerlogo.png';
+			if (file_exists($filename)) {
+				// This may exist if course cloud has provided
+				return ("/wellfiles/partnerlogo.png");
+			}
+			else {
+				// This is always in the build
+				return ("/wellfiles/relaytrust.png");
+			}	
+			// End Update
+			//return false;	
         }
 
         // Hide the requested size in the file path.
@@ -788,7 +810,7 @@ class core_renderer extends renderer_base {
             $timeleft = $CFG->maintenance_later - time();
             // If timeleft less than 30 sec, set the class on block to error to highlight.
             $errorclass = ($timeleft < 30) ? 'alert-error alert-danger' : 'alert-warning';
-            $output .= $this->box_start($errorclass . ' moodle-has-zindex maintenancewarning m-3 alert');
+            $output .= $this->box_start($errorclass . ' moodle-has-zindex maintenancewarning m-a-1 alert');
             $a = new stdClass();
             $a->hour = (int)($timeleft / 3600);
             $a->min = (int)(($timeleft / 60) % 60);
@@ -1385,20 +1407,15 @@ class core_renderer extends renderer_base {
     public function footer() {
         global $CFG, $DB;
 
-        $output = '';
-
         // Give plugins an opportunity to touch the page before JS is finalized.
         $pluginswithfunction = get_plugins_with_function('before_footer', 'lib.php');
         foreach ($pluginswithfunction as $plugins) {
             foreach ($plugins as $function) {
-                $extrafooter = $function();
-                if (is_string($extrafooter)) {
-                    $output .= $extrafooter;
-                }
+                $function();
             }
         }
 
-        $output .= $this->container_end_all(true);
+        $output = $this->container_end_all(true);
 
         $footer = $this->opencontainers->pop('header/footer');
 
@@ -1425,7 +1442,8 @@ class core_renderer extends renderer_base {
         if (!empty($this->page->context->id)) {
             $this->page->requires->js_call_amd('core/notification', 'init', array(
                 $this->page->context->id,
-                \core\notification::fetch_as_array($this)
+                \core\notification::fetch_as_array($this),
+                isloggedin()
             ));
         }
         $footer = str_replace($this->unique_end_html_token, $this->page->requires->get_end_code(), $footer);
@@ -1821,12 +1839,11 @@ class core_renderer extends renderer_base {
      */
     public function blocks_for_region($region) {
         $blockcontents = $this->page->blocks->get_content_for_region($region, $this);
+        $blocks = $this->page->blocks->get_blocks_for_region($region);
         $lastblock = null;
         $zones = array();
-        foreach ($blockcontents as $bc) {
-            if ($bc instanceof block_contents) {
-                $zones[] = $bc->title;
-            }
+        foreach ($blocks as $block) {
+            $zones[] = $block->title;
         }
         $output = '';
 
@@ -1983,7 +2000,7 @@ class core_renderer extends renderer_base {
 
         $output = $this->box_start('generalbox modal modal-dialog modal-in-page show', 'notice', $attributes);
         $output .= $this->box_start('modal-content', 'modal-content');
-        $output .= $this->box_start('modal-header px-3', 'modal-header');
+        $output .= $this->box_start('modal-header p-x-1', 'modal-header');
         $output .= html_writer::tag('h4', get_string('confirm'));
         $output .= $this->box_end();
         $attributes = [
@@ -3221,13 +3238,31 @@ EOD;
             return '';
         }
 
-        $data = [
-            'action' => new moodle_url('/search/index.php'),
-            'hiddenfields' => (object) ['name' => 'context', 'value' => $this->page->context->id],
-            'inputname' => 'q',
-            'searchstring' => get_string('search'),
-            ];
-        return $this->render_from_template('core/search_input_navbar', $data);
+        if ($id == false) {
+            $id = uniqid();
+        } else {
+            // Needs to be cleaned, we use it for the input id.
+            $id = clean_param($id, PARAM_ALPHANUMEXT);
+        }
+
+        // JS to animate the form.
+        $this->page->requires->js_call_amd('core/search-input', 'init', array($id));
+
+        $searchicon = html_writer::tag('div', $this->pix_icon('a/search', get_string('search', 'search'), 'moodle'),
+            array('role' => 'button', 'tabindex' => 0));
+        $formattrs = array('class' => 'search-input-form', 'action' => $CFG->wwwroot . '/search/index.php');
+        $inputattrs = array('type' => 'text', 'name' => 'q', 'placeholder' => get_string('search', 'search'),
+            'size' => 13, 'tabindex' => -1, 'id' => 'id_q_' . $id, 'class' => 'form-control');
+
+        $contents = html_writer::tag('label', get_string('enteryoursearchquery', 'search'),
+            array('for' => 'id_q_' . $id, 'class' => 'accesshide')) . html_writer::empty_tag('input', $inputattrs);
+        if ($this->page->context && $this->page->context->contextlevel !== CONTEXT_SYSTEM) {
+            $contents .= html_writer::empty_tag('input', ['type' => 'hidden',
+                    'name' => 'context', 'value' => $this->page->context->id]);
+        }
+        $searchinput = html_writer::tag('form', $contents, $formattrs);
+
+        return html_writer::tag('div', $searchicon . $searchinput, array('class' => 'search-input-wrapper nav-link', 'id' => $id));
     }
 
     /**
@@ -4626,7 +4661,7 @@ EOD;
         }
         $context->errorformatted = $this->error_text($context->error);
         $url = $this->get_logo_url();
-        if ($url) {
+        if ($url && strpos($url, 'wellfiles') === false) {
             $url = $url->out(false);
         }
         $context->logourl = $url;
@@ -4718,7 +4753,7 @@ EOD;
 
         $context = $form->export_for_template($this);
         $url = $this->get_logo_url();
-        if ($url) {
+        if ($url && strpos($url, 'wellfiles') === false) {
             $url = $url->out(false);
         }
         $context['logourl'] = $url;
