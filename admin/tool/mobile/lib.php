@@ -142,8 +142,9 @@ function tool_mobile_myprofile_navigation(\core_user\output\myprofile\tree $tree
         $mobileqr = null;
         $qrcodeforappstr = get_string('qrcodeformobileappaccess', 'tool_mobile');
 
-        if ($mobilesettings->qrcodetype == tool_mobile\api::QR_CODE_LOGIN && is_https()) {
-
+		// REMOVED HTTPS requirement for QR login -- Derek Maxson 20210126
+        //if ($mobilesettings->qrcodetype == tool_mobile\api::QR_CODE_LOGIN && is_https()) {
+		if ($mobilesettings->qrcodetype == tool_mobile\api::QR_CODE_LOGIN) {
             if (is_siteadmin() || \core\session\manager::is_loggedinas()) {
                 $mobileqr = get_string('qrsiteadminsnotallowed', 'tool_mobile');
             } else {
