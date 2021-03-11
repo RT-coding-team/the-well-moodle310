@@ -14,9 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 /**
- * Localization file
+ * Sends messages to Rocketchat
  */
-$string['manage'] = 'Manage Chat Attachments';
-$string['pluginname'] = 'Chat Attachments';
-$string['messaging_url'] = 'Messaging URL';
-$string['messaging_url_desc'] = 'The URL of the server where messages are pushed to.';
+require_once(dirname(dirname(dirname(__FILE__))).'/config.php');
+require_once($CFG->libdir . "/filelib.php");
+
+$url = get_config('local_chat_attachments', 'messaging_url');
+echo "Sending Requests to: " . $url . "\r\n";
