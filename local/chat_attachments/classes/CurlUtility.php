@@ -71,12 +71,11 @@ class CurlUtility
      *
      * @param string $path      the path to request
      * @param string $method    the method to use POST or GET
-     * @param array $fields     an array of fields to send (default: [])
-     * @param array $json       JSON to send (default: '')
+     * @param array $data       The data to send (string or array)
      * @return string
      * @access public
      */
-    public function makeRequest($path, $method, $fields = [], $json = '')
+    public function makeRequest($path, $method, $data)
     {
         $url = $this->url . '' . ltrim($path, '/');
         $method = strtoupper($method);
@@ -84,15 +83,12 @@ class CurlUtility
          * open connection
          */
         $ch = curl_init();
+        $payload = $data;
         if ($method == 'GET') {
-            $fieldsString = $this->urlify($fields);
-            $url = $url . '?' . $fieldsString;
-        } else {
-            if ($json !== '') {
-                $fieldsString = $json;
-            } else {
-                $fieldsString = $fields;
+            if (is_array($data)) {
+                $payload = $this->urlify($data);
             }
+            $url = $url . '?' . $payload;
         }
         /**
          * Setup cURL, we start by spoofing the user agent since it is from code:
@@ -113,7 +109,7 @@ class CurlUtility
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
         if ($method == 'POST') {
             curl_setopt($ch, CURLOPT_POST, 1);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $fieldsString);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
         }
         if ($json !== '') {
             curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type:application/json']);

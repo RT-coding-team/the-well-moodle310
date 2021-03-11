@@ -40,7 +40,7 @@ if ($url === '') {
 $curl = new CurlUtility($url);
 
 echo 'Sending request to ' . $url . 'messageStatus/' . $boxId . '<br>';
-$lastSync = $curl->makeRequest('messageStatus/' . $boxId, 'GET');
+$lastSync = $curl->makeRequest('messageStatus/' . $boxId, 'GET', []);
 echo 'Last Sync Time: ' . date('F j, Y H:i:s', $lastSync) . '(' . $lastSync . ')<br>';
 /**
  * Create the course payload to send to the API
@@ -106,5 +106,51 @@ echo '</pre><br>';
  * Send the payload to the API
  */
 echo 'Sending request to ' . $url . 'courseRosters/' . $boxId . '<br>';
-$curl->makeRequest('courseRosters/' . $boxId, 'POST', [], json_encode($payload));
+$curl->makeRequest('courseRosters/' . $boxId, 'POST', json_encode($payload));
 echo 'The response was ' . $curl->responseCode . '<br>';
+/**
+ * Gather up the messages to send to the API
+ */
+$payload = [];
+$attachments = [];
+$query = 'SELECT m.id, m.conversationid, m.subject, m.fullmessagehtml, m.timecreated, m.useridfrom as sender_id, ' .
+        's.username as sender_username, s.email as sender_email, r.id as recipient_id, r.username as recipient_username, ' .
+        'r.email as recipient_email FROM {messages} AS m INNER JOIN {message_conversation_members} AS mcm ON m.conversationid=mcm.conversationid ' .
+        'INNER JOIN {user} AS s ON mcm.userid = s.id INNER JOIN {user} AS r ON m.useridfrom = r.id ' .
+        'WHERE m.useridfrom <> mcm.userid ORDER BY m.timecreated ASC';
+$chats = $DB->get_records_sql($query);
+foreach ($chats as $chat) {
+    $message = htmlspecialchars_decode($chat->fullmessagehtml);
+    if (strpos($message, '<attachment') !== false) {
+        $attachments[] = $message;
+    }
+    $payload[] = [
+        'id'                =>  intval($chat->id),
+        'conversation_id'   =>  intval($chat->conversationid),
+        'subject'           =>  $chat->subject,
+        'message_raw'       =>  $message,
+        'message_safe'      =>  htmlspecialchars($chat->fullmessagehtml),
+        'sender'            =>  [
+            'id'        =>  $chat->sender_id,
+            'username'  =>  $chat->sender_username,
+            'email'     =>  $chat->sender_email
+        ],
+        'recipient'            =>  [
+            'id'        =>  $chat->recipient_id,
+            'username'  =>  $chat->recipient_username,
+            'email'     =>  $chat->recipient_email
+        ],
+        'created_on'    =>  intval($chat->timecreated)
+    ];
+}
+echo 'Our Chat Payload:<br><pre>';
+echo json_encode($payload, JSON_PRETTY_PRINT);
+echo '</pre><br>';
+/**
+ * Send the payload to the API
+ */
+echo 'Sending request to ' . $url . 'messages/' . $boxId . '<br>';
+$curl->makeRequest('messages/' . $boxId, 'POST', json_encode($payload));
+echo 'The response was ' . $curl->responseCode . '<br>';
+
+echo 'Total Attachments to send: ' . count($attachments) . '<br>';
