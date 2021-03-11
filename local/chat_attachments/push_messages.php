@@ -16,8 +16,20 @@
 /**
  * Sends messages to Rocketchat
  */
-require_once(dirname(dirname(dirname(__FILE__))).'/config.php');
-require_once($CFG->libdir . "/filelib.php");
+require_once(dirname(dirname(dirname(__FILE__))) . DIRECTORY_SEPARATOR . 'config.php');
+require_once($CFG->libdir . DIRECTORY_SEPARATOR . 'filelib.php');
+require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'CurlUtility.php');
 
 $url = get_config('local_chat_attachments', 'messaging_url');
-echo "Sending Requests to: " . $url . "\r\n";
+echo 'Sending Requests to: ' . $url . '<br>';
+
+if ($url === '') {
+    echo 'No URL provided!<br>';
+    exit;
+}
+
+$curl = new CurlUtility($url);
+
+echo 'Sending request to ' . $url . 'messageStatus/1<br>';
+$lastSync = $curl->makeRequest('messageStatus/1', 'GET');
+echo 'Last Sync Time: ' . date('F j, Y H:i:s', $lastSync) . '(' . $lastSync . ')<br>';
