@@ -21,7 +21,15 @@ require_once($CFG->libdir . DIRECTORY_SEPARATOR . 'filelib.php');
 require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'CurlUtility.php');
 
 $url = get_config('local_chat_attachments', 'messaging_url');
-$boxId = 1;
+$machineIdFile = DIRECTORY_SEPARATOR . 'etc' . DIRECTORY_SEPARATOR . 'machine-id';
+$boxId = null;
+if (file_exists($machineIdFile)) {
+    $boxId = trim(file_get_contents($machineIdFile));
+}
+if ((!$boxId) || ($boxId === '')) {
+    echo 'Unable to retrieve the Box ID<br>';
+    exit;
+}
 echo 'Sending Requests to: ' . $url . '<br>';
 
 if ($url === '') {
