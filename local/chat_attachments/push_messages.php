@@ -19,6 +19,7 @@
 require_once(dirname(dirname(dirname(__FILE__))) . DIRECTORY_SEPARATOR . 'config.php');
 require_once($CFG->libdir . DIRECTORY_SEPARATOR . 'filelib.php');
 require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'CurlUtility.php');
+require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Attachment.php');
 
 $url = get_config('local_chat_attachments', 'messaging_url');
 $machineIdFile = DIRECTORY_SEPARATOR . 'etc' . DIRECTORY_SEPARATOR . 'machine-id';
@@ -121,15 +122,16 @@ $query = 'SELECT m.id, m.conversationid, m.subject, m.fullmessagehtml, m.timecre
 $chats = $DB->get_records_sql($query);
 foreach ($chats as $chat) {
     $message = htmlspecialchars_decode($chat->fullmessagehtml);
-    if (strpos($message, '<attachment') !== false) {
-        $attachments[] = $message;
+    $attachment = null;
+    if (Attachment::isAttachment($message)) {
+        $attachment = new Attachment($message);
+        $attachments[] = $attachment;
     }
-    $payload[] = [
+    $data = [
         'id'                =>  intval($chat->id),
         'conversation_id'   =>  intval($chat->conversationid),
         'subject'           =>  $chat->subject,
-        'message_raw'       =>  $message,
-        'message_safe'      =>  htmlspecialchars($chat->fullmessagehtml),
+        'message'           =>  $message,
         'sender'            =>  [
             'id'        =>  $chat->sender_id,
             'username'  =>  $chat->sender_username,
@@ -140,8 +142,13 @@ foreach ($chats as $chat) {
             'username'  =>  $chat->recipient_username,
             'email'     =>  $chat->recipient_email
         ],
+        'attachment'    =>  null,
         'created_on'    =>  intval($chat->timecreated)
     ];
+    if ($attachment) {
+        $data['attachment'] = $attachment->toArray();
+    }
+    $payload[] = $data;
 }
 echo 'Our Chat Payload:<br><pre>';
 echo json_encode($payload, JSON_PRETTY_PRINT);
@@ -152,5 +159,7 @@ echo '</pre><br>';
 echo 'Sending request to ' . $url . 'messages/' . $boxId . '<br>';
 $curl->makeRequest('messages/' . $boxId, 'POST', json_encode($payload));
 echo 'The response was ' . $curl->responseCode . '<br>';
-
+/**
+ * Send each attachment to the API
+ */
 echo 'Total Attachments to send: ' . count($attachments) . '<br>';
