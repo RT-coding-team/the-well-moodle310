@@ -43,6 +43,14 @@ if ($hassiteconfig) {
                 ''
             )
         );
+        $page->add(
+            new admin_setting_configtext(
+                'local_chat_attachments/messaging_token',
+                new lang_string('messaging_token', 'local_chat_attachments'),
+                new lang_string('messaging_token_desc', 'local_chat_attachments'),
+                ''
+            )
+        );
     }
 
     $ADMIN->add('localplugins', $page);
