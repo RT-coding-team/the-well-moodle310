@@ -44,6 +44,13 @@ class CurlUtility
     private $url = '';
 
     /**
+     * The authorization bearer token (if required)
+     *
+     * @var string
+     */
+    private $token = '';
+
+    /**
      * Set up the class
      *
      * @param string $url The URL
@@ -51,7 +58,7 @@ class CurlUtility
      * @throws InvalidArgumentException     If the URL is not set
 
      */
-    public function __construct($url) {
+    public function __construct($url, $token = '') {
         if ($url === '') {
             throw new InvalidArgumentException('You must provide a valid URL.');
         }
@@ -64,6 +71,7 @@ class CurlUtility
         } else {
             $this->url = $url;
         }
+        $this->token = $token;
     }
 
     /**
@@ -84,6 +92,13 @@ class CurlUtility
     {
         $url = $this->url . '' . ltrim($path, '/');
         $method = strtoupper($method);
+        $headers = [];
+        if ($isJson) {
+            $headers[] = 'Content-Type:application/json';
+        }
+        if ($this->token !== '') {
+            $headers[] = 'Authorization: Bearer ' . $this->token;
+        }
         if (($filepath) && ($method !== 'POST')) {
             throw new InvalidArgumentException('If you supply a filepath, the method must be POST.');
         }
@@ -122,6 +137,7 @@ class CurlUtility
             'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'
         );
         curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_TIMEOUT, 60);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
@@ -132,9 +148,6 @@ class CurlUtility
         if ($method == 'POST') {
             curl_setopt($ch, CURLOPT_POST, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-        }
-        if ($isJson) {
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type:application/json']);
         }
         /**
          * execute request

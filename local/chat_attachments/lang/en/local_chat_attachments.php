@@ -20,3 +20,5 @@ $string['manage'] = 'Manage Chat Attachments';
 $string['pluginname'] = 'Chat Attachments';
 $string['messaging_url'] = 'Messaging URL';
 $string['messaging_url_desc'] = 'The URL of the server where messages are pushed to.';
+$string['messaging_token'] = 'Messaging Token';
+$string['messaging_token_desc'] = 'The authorization token of the server where messages are pushed to.';
