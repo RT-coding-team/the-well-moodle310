@@ -107,14 +107,14 @@ echo '</pre><br>';
  * Send the payload to the API
  */
 echo 'Sending request to ' . $url . 'courseRosters/' . $boxId . '<br>';
-$curl->makeRequest('courseRosters/' . $boxId, 'POST', json_encode($payload));
+$curl->makeRequest('courseRosters/' . $boxId, 'POST', json_encode($payload), null, true);
 echo 'The response was ' . $curl->responseCode . '<br>';
 /**
  * Gather up the messages to send to the API
  */
 $payload = [];
 $attachments = [];
-$query = 'SELECT m.id, m.conversationid, m.subject, m.fullmessagehtml, m.timecreated, m.useridfrom as sender_id, ' .
+$query = 'SELECT m.id, m.conversationid, m.subject, m.fullmessagehtml, m.timecreated, s.id as sender_id, ' .
         's.username as sender_username, s.email as sender_email, r.id as recipient_id, r.username as recipient_username, ' .
         'r.email as recipient_email FROM {messages} AS m INNER JOIN {message_conversation_members} AS mcm ON m.conversationid=mcm.conversationid ' .
         'INNER JOIN {user} AS s ON mcm.userid = s.id INNER JOIN {user} AS r ON m.useridfrom = r.id ' .
@@ -133,12 +133,12 @@ foreach ($chats as $chat) {
         'subject'           =>  $chat->subject,
         'message'           =>  $message,
         'sender'            =>  [
-            'id'        =>  $chat->sender_id,
+            'id'        =>  intval($chat->sender_id),
             'username'  =>  $chat->sender_username,
             'email'     =>  $chat->sender_email
         ],
         'recipient'            =>  [
-            'id'        =>  $chat->recipient_id,
+            'id'        =>  intval($chat->recipient_id),
             'username'  =>  $chat->recipient_username,
             'email'     =>  $chat->recipient_email
         ],
@@ -156,10 +156,23 @@ echo '</pre><br>';
 /**
  * Send the payload to the API
  */
-echo 'Sending request to ' . $url . 'messages/' . $boxId . '<br>';
-$curl->makeRequest('messages/' . $boxId, 'POST', json_encode($payload));
+echo 'Sending request to ' . $url . 'messages/' . $boxId . '/' . $lastSync . '<br>';
+$curl->makeRequest('messages/' . $boxId . '/' . $lastSync, 'POST', json_encode($payload), null, true);
 echo 'The response was ' . $curl->responseCode . '<br>';
 /**
  * Send each attachment to the API
+ *
  */
 echo 'Total Attachments to send: ' . count($attachments) . '<br>';
+$fs = get_file_storage();
+$context = context_system::instance();
+echo 'Sending attachments<br>';
+foreach ($attachments as $attachment) {
+    $filepath = $attachment->getFilePath($fs, $context->id, 'chat_attachment');
+    if ((!$filepath) || (!file_exists($filepath))) {
+        continue;
+    }
+    //Uncomment when the API is working
+    // $response = $curl->makeRequest('attachments', 'POST', $attachment->toArray(), $filepath);
+    //echo 'File: ' . basename($filepath) . ' status: ' . $curl->responseCode . '<br>';
+}
