@@ -15,6 +15,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 /**
  * Sends messages to Rocketchat
+ * @TODO Limit messages based on the provided Timestamp
+ * @TODO Comment out the push of attachments to the API
  */
 require_once(dirname(dirname(dirname(__FILE__))) . DIRECTORY_SEPARATOR . 'config.php');
 require_once($CFG->libdir . DIRECTORY_SEPARATOR . 'filelib.php');
@@ -40,7 +42,7 @@ if ($url === '') {
 
 $curl = new CurlUtility($url);
 
-echo 'Sending request to ' . $url . 'messageStatus/' . $boxId . '<br>';
+echo 'Sending GET request to ' . $url . 'messageStatus/' . $boxId . '<br>';
 $lastSync = $curl->makeRequest('messageStatus/' . $boxId, 'GET', []);
 echo 'Last Sync Time: ' . date('F j, Y H:i:s', $lastSync) . '(' . $lastSync . ')<br>';
 /**
@@ -106,7 +108,7 @@ echo '</pre><br>';
 /**
  * Send the payload to the API
  */
-echo 'Sending request to ' . $url . 'courseRosters/' . $boxId . '<br>';
+echo 'Sending POST request to ' . $url . 'courseRosters/' . $boxId . '<br>';
 $curl->makeRequest('courseRosters/' . $boxId, 'POST', json_encode($payload), null, true);
 echo 'The response was ' . $curl->responseCode . '<br>';
 /**
@@ -156,7 +158,7 @@ echo '</pre><br>';
 /**
  * Send the payload to the API
  */
-echo 'Sending request to ' . $url . 'messages/' . $boxId . '/' . $lastSync . '<br>';
+echo 'Sending POST request to ' . $url . 'messages/' . $boxId . '/' . $lastSync . '<br>';
 $curl->makeRequest('messages/' . $boxId . '/' . $lastSync, 'POST', json_encode($payload), null, true);
 echo 'The response was ' . $curl->responseCode . '<br>';
 /**
@@ -175,4 +177,27 @@ foreach ($attachments as $attachment) {
     //Uncomment when the API is working
     // $response = $curl->makeRequest('attachments', 'POST', $attachment->toArray(), $filepath);
     //echo 'File: ' . basename($filepath) . ' status: ' . $curl->responseCode . '<br>';
+    echo 'Send Attachment: ' . basename($filepath) . '<br>';
+}
+/**
+ * Now we need to import new messages
+ */
+echo 'Retrieving new messages<br>';
+echo 'Sending GET request to ' . $url . 'messages/' . $boxId . '/' . $lastSync . '<br>';
+$response = $curl->makeRequest('messages/' . $boxId . '/' . $lastSync, 'GET', [], null, true);
+echo json_encode(json_decode($response), JSON_PRETTY_PRINT);
+// echo json_encode(json_decode($response), JSON_PRETTY_PRINT);
+echo '</pre><br>';
+// $newMessages = json_decode($response);
+$newMessages = json_decode($response);
+if (count($newMessages) == 0) {
+    echo 'There are no new messages.<br>';
+    exit();
+}
+/**
+ * Send a test message
+ */
+// Location in messages/classes/api.php
+foreach ($newMessages as $message) {
+    \core_message\api::send_message_to_conversation($message->sender->id, $message->conversation_id, htmlspecialchars($message->message), FORMAT_HTML);
 }
