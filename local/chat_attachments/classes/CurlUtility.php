@@ -69,16 +69,38 @@ class CurlUtility
     /**
      * Make a cURL Request
      *
-     * @param string $path      the path to request
-     * @param string $method    the method to use POST or GET
-     * @param array $data       The data to send (string or array)
+     * @param string    $path       the path to request
+     * @param string    $method     the method to use POST or GET
+     * @param array     $data       The data to send (string or array)
+     * @param string    $filepath   A path to a file to send.
+     * @param string    $isJson     Is the data JSON? (Send data as a string)
      * @return string
      * @access public
+     * @throws  InvalidArgumentException    If you supply a filepath, but send as a GET
+     * @throws  InvalidArgumentException    If you supply a filepath, but send data as a string
+     * @throws  InvalidArgumentException    If you supply a filepath, but the file does not exist
      */
-    public function makeRequest($path, $method, $data)
+    public function makeRequest($path, $method, $data, $filepath = null, $isJson = false)
     {
         $url = $this->url . '' . ltrim($path, '/');
         $method = strtoupper($method);
+        if (($filepath) && ($method !== 'POST')) {
+            throw new InvalidArgumentException('If you supply a filepath, the method must be POST.');
+        }
+
+        if (($filepath) && (!is_array($data))) {
+            throw new InvalidArgumentException('If you supply a filepath, the data must be an array.');
+        }
+
+        if (($filepath) && (!file_exists($filepath))) {
+            throw new InvalidArgumentException('If you supply a filepath, the file must exist.');
+        }
+
+        if ($filepath) {
+            $mimeType = mime_content_type($filepath);
+            $data['file'] = new CURLFile($filepath, $mimeType, basename($filepath));
+        }
+
         /**
          * open connection
          */
@@ -111,7 +133,7 @@ class CurlUtility
             curl_setopt($ch, CURLOPT_POST, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
         }
-        if ($json !== '') {
+        if ($isJson) {
             curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type:application/json']);
         }
         /**

@@ -84,10 +84,29 @@ class Attachment
     {
         return [
             'type'      =>  $this->type,
-            'id'        =>  $this->id,
+            'id'        =>  intval($this->id),
             'filepath'  =>  $this->filepath,
             'filename'  =>  $this->filename
         ];
+    }
+
+    public function getFilePath($fileStorage, $contextId, $fileArea)
+    {
+        $file = $fileStorage->get_file(
+            $contextId,
+            'local_chat_attachments',
+            $fileArea,
+            $this->id,
+            $this->filepath,
+            $this->filename
+        );
+        if ($file) {
+            $path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $this->filename;
+            $file->copy_content_to($path);
+            return $path;
+        } else {
+            return '';
+        }
     }
 
     /**
