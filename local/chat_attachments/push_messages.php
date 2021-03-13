@@ -16,7 +16,8 @@
 /**
  * Sends messages to Rocketchat
  * @TODO Limit messages based on the provided Timestamp
- * @TODO Comment out the push of attachments to the API
+ * @TODO Uncomment the push of attachments to the API
+ * @TODO Send the request to update the time synced
  */
 require_once(dirname(dirname(dirname(__FILE__))) . DIRECTORY_SEPARATOR . 'config.php');
 require_once($CFG->libdir . DIRECTORY_SEPARATOR . 'filelib.php');
@@ -24,6 +25,7 @@ require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPA
 require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Attachment.php');
 
 $url = get_config('local_chat_attachments', 'messaging_url');
+$token = get_config('local_chat_attachments', 'messaging_token');
 $machineIdFile = DIRECTORY_SEPARATOR . 'etc' . DIRECTORY_SEPARATOR . 'machine-id';
 $boxId = null;
 if (file_exists($machineIdFile)) {
@@ -40,11 +42,15 @@ if ($url === '') {
     exit;
 }
 
-$curl = new CurlUtility($url);
+$curl = new CurlUtility($url, $token);
 
+/**
+ * Retrieve the last time we synced
+ */
 echo 'Sending GET request to ' . $url . 'messageStatus/' . $boxId . '<br>';
 $lastSync = $curl->makeRequest('messageStatus/' . $boxId, 'GET', []);
 echo 'Last Sync Time: ' . date('F j, Y H:i:s', $lastSync) . '(' . $lastSync . ')<br>';
+
 /**
  * Create the course payload to send to the API
  */
@@ -105,12 +111,14 @@ foreach ($courses as $course) {
 echo 'Our Course Payload:<br><pre>';
 echo json_encode($payload, JSON_PRETTY_PRINT);
 echo '</pre><br>';
+
 /**
- * Send the payload to the API
+ * Send the course payload to the API
  */
 echo 'Sending POST request to ' . $url . 'courseRosters/' . $boxId . '<br>';
 $curl->makeRequest('courseRosters/' . $boxId, 'POST', json_encode($payload), null, true);
 echo 'The response was ' . $curl->responseCode . '<br>';
+
 /**
  * Gather up the messages to send to the API
  */
@@ -155,22 +163,24 @@ foreach ($chats as $chat) {
 echo 'Our Chat Payload:<br><pre>';
 echo json_encode($payload, JSON_PRETTY_PRINT);
 echo '</pre><br>';
+
 /**
- * Send the payload to the API
+ * Send the message payload to the API
  */
 echo 'Sending POST request to ' . $url . 'messages/' . $boxId . '/' . $lastSync . '<br>';
 $curl->makeRequest('messages/' . $boxId . '/' . $lastSync, 'POST', json_encode($payload), null, true);
 echo 'The response was ' . $curl->responseCode . '<br>';
+
 /**
  * Send each attachment to the API
  *
  */
 echo 'Total Attachments to send: ' . count($attachments) . '<br>';
 $fs = get_file_storage();
-$context = context_system::instance();
+$systemContext = context_system::instance();
 echo 'Sending attachments<br>';
 foreach ($attachments as $attachment) {
-    $filepath = $attachment->getFilePath($fs, $context->id, 'chat_attachment');
+    $filepath = $attachment->getFilePath($fs, $systemContext->id, 'chat_attachment');
     if ((!$filepath) || (!file_exists($filepath))) {
         continue;
     }
@@ -179,25 +189,57 @@ foreach ($attachments as $attachment) {
     //echo 'File: ' . basename($filepath) . ' status: ' . $curl->responseCode . '<br>';
     echo 'Send Attachment: ' . basename($filepath) . '<br>';
 }
+
 /**
- * Now we need to import new messages
+ * Now request new messages from the API
  */
 echo 'Retrieving new messages<br>';
 echo 'Sending GET request to ' . $url . 'messages/' . $boxId . '/' . $lastSync . '<br>';
 $response = $curl->makeRequest('messages/' . $boxId . '/' . $lastSync, 'GET', [], null, true);
+echo 'The Received Response:<br><pre>';
 echo json_encode(json_decode($response), JSON_PRETTY_PRINT);
-// echo json_encode(json_decode($response), JSON_PRETTY_PRINT);
 echo '</pre><br>';
-// $newMessages = json_decode($response);
 $newMessages = json_decode($response);
 if (count($newMessages) == 0) {
     echo 'There are no new messages.<br>';
     exit();
 }
+
 /**
- * Send a test message
+ * For each message, retrieve the attachment, save it to moodle, and save the new message.
  */
-// Location in messages/classes/api.php
 foreach ($newMessages as $message) {
-    \core_message\api::send_message_to_conversation($message->sender->id, $message->conversation_id, htmlspecialchars($message->message), FORMAT_HTML);
+    $content = $message->message;
+    $html = htmlspecialchars_decode($message->message);
+    if (Attachment::isAttachment($content)) {
+        $attachment = new Attachment($content);
+        /**
+         * Download and save the attachment
+         */
+        if ($attachment->id <= 0) {
+            // cannot get the attachment.  Move along.
+            continue;
+        }
+        echo 'Saving New Attachment: ' . basename($attachment->filename) . '<br>';
+        $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $attachment->filename;
+        $downloaded = $curl->downloadFile('attachments/' . $attachment->id, $tempPath);
+        if (!$downloaded) {
+            echo '<p>&#10060; Unable to download the file: ' . $attachment->filename . '</p>';
+            continue;
+        }
+        $attachment->store($fs, $systemContext->id, 'chat_attachment', $tempPath);
+        $content = $attachment->toString();
+    }
+    // Location in messages/classes/api.php
+    \core_message\api::send_message_to_conversation($message->sender->id, $message->conversation_id, htmlspecialchars($content), FORMAT_HTML);
 }
+
+/**
+ * Send a request to update the last time synced
+ */
+
+
+/**
+ * Script finished
+ */
+echo '<p>&#129299;&#128077; Script Complete!</p>';
