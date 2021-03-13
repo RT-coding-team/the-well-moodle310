@@ -163,6 +163,38 @@ class CurlUtility
     }
 
     /**
+     * Download a file locally
+     *
+     * @param  string $sourcePath  The path of the file on the url
+     * @param  string $destination The destination of the file
+     * @return boolean             Successfully downloaded?
+     *
+     * @link https://stackoverflow.com/a/6409531/4638563
+     */
+    public function downloadFile($sourcePath, $destination)
+    {
+        $url = $this->url . '' . ltrim($sourcePath, '/');
+        $headers = [];
+        if ($this->token !== '') {
+            $headers[] = 'Authorization: Bearer ' . $this->token;
+        }
+        $write = fopen($destination, 'w+b');
+        //Here is the file we are downloading, replace spaces with %20
+        $ch = curl_init(str_replace(' ', '%20', $url));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 50);
+        // write curl response to file
+        curl_setopt($ch, CURLOPT_FILE, $write);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        // get curl response
+        curl_exec($ch);
+        curl_close($ch);
+        fclose($write);
+
+        return (file_exists($destination));
+    }
+
+    /**
      * Takes an array of fields and makes a string from them for passing in cURL
      *
      * @param array $fields the fields to urlify

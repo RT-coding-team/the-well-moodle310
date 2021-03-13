@@ -90,6 +90,26 @@ class Attachment
         ];
     }
 
+    /**
+     * Get a string version of the attachment data
+     *
+     * @return string   Details about the attachment
+     * @access public
+     */
+    public function toString()
+    {
+        return '<attachment type="' . $this->type . '" id="' . $this->id . '" filepath="' . $this->filepath . '" filename="' . $this->filename . '">';
+    }
+
+    /**
+     * Copies the file to a temporary directory, and get's it's path
+     *
+     * @param  object   $fileStorage    Moodle's File Storage
+     * @param  integer  $contextId      The id of the context where the file belongs
+     * @param  string   $fileArea       The file area to store the file
+     * @return string                   The path to the file (empty string if failed)
+     * @access public
+     */
     public function getFilePath($fileStorage, $contextId, $fileArea)
     {
         $file = $fileStorage->get_file(
@@ -107,6 +127,31 @@ class Attachment
         } else {
             return '';
         }
+    }
+
+    /**
+     * Stores the file into moodle
+     *
+     * @param  object   $fileStorage    Moodle's File Storage
+     * @param  integer  $contextId      The id of the context where the file belongs
+     * @param  string   $fileArea       The file area to store the file
+     * @param  string   $tempFile       Path to the temporary file
+     * @return void
+     *
+     * @access public
+     */
+    public function store($fileStorage, $contextId, $fileArea, $tempFile)
+    {
+        $record = [
+            'contextid' =>  $contextId,
+            'component' =>  'local_chat_attachments',
+            'filearea'  =>  $fileArea,
+            'itemid'    =>  file_get_unused_draft_itemid(),
+            'filepath'  =>  '/',
+            'filename'  =>  $this->filename
+        ];
+        $file = $fileStorage->create_file_from_pathname($record, $tempFile);
+        $this->id = $record['itemid'];
     }
 
     /**
