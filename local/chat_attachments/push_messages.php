@@ -42,13 +42,13 @@ if ($url === '') {
     exit;
 }
 
-$curl = new CurlUtility($url, $token);
+$curl = new CurlUtility($url, $token, $boxId);
 
 /**
  * Retrieve the last time we synced
  */
-echo 'Sending GET request to ' . $url . 'messageStatus/' . $boxId . '<br>';
-$lastSync = $curl->makeRequest('messageStatus/' . $boxId, 'GET', []);
+echo 'Sending GET request to ' . $url . 'messageStatus<br>';
+$lastSync = $curl->makeRequest('messageStatus', 'GET', []);
 echo 'Last Sync Time: ' . date('F j, Y H:i:s', $lastSync) . '(' . $lastSync . ')<br>';
 
 /**
@@ -115,8 +115,8 @@ echo '</pre><br>';
 /**
  * Send the course payload to the API
  */
-echo 'Sending POST request to ' . $url . 'courseRosters/' . $boxId . '<br>';
-$curl->makeRequest('courseRosters/' . $boxId, 'POST', json_encode($payload), null, true);
+echo 'Sending POST request to ' . $url . 'courseRosters<br>';
+$curl->makeRequest('courseRosters', 'POST', json_encode($payload), null, true);
 echo 'The response was ' . $curl->responseCode . '<br>';
 
 /**
@@ -167,8 +167,8 @@ echo '</pre><br>';
 /**
  * Send the message payload to the API
  */
-echo 'Sending POST request to ' . $url . 'messages/' . $boxId . '/' . $lastSync . '<br>';
-$curl->makeRequest('messages/' . $boxId . '/' . $lastSync, 'POST', json_encode($payload), null, true);
+echo 'Sending POST request to ' . $url . 'messages/<br>';
+$curl->makeRequest('messages', 'POST', json_encode($payload), null, true);
 echo 'The response was ' . $curl->responseCode . '<br>';
 
 /**
@@ -185,8 +185,8 @@ foreach ($attachments as $attachment) {
         continue;
     }
     //Uncomment when the API is working
-    // $response = $curl->makeRequest('attachments', 'POST', $attachment->toArray(), $filepath);
-    //echo 'File: ' . basename($filepath) . ' status: ' . $curl->responseCode . '<br>';
+    $response = $curl->makeRequest('attachments', 'POST', $attachment->toArray(), $filepath);
+    echo 'File: ' . basename($filepath) . ' status: ' . $curl->responseCode . '<br>';
     echo 'Send Attachment: ' . basename($filepath) . '<br>';
 }
 
@@ -194,8 +194,8 @@ foreach ($attachments as $attachment) {
  * Now request new messages from the API
  */
 echo 'Retrieving new messages<br>';
-echo 'Sending GET request to ' . $url . 'messages/' . $boxId . '/' . $lastSync . '<br>';
-$response = $curl->makeRequest('messages/' . $boxId . '/' . $lastSync, 'GET', [], null, true);
+echo 'Sending GET request to ' . $url . 'messages/' . $lastSync . '<br>';
+$response = $curl->makeRequest('messages/' . $lastSync, 'GET', [], null, true);
 echo 'The Received Response:<br><pre>';
 echo json_encode(json_decode($response), JSON_PRETTY_PRINT);
 echo '</pre><br>';
@@ -233,12 +233,6 @@ foreach ($newMessages as $message) {
     // Location in messages/classes/api.php
     \core_message\api::send_message_to_conversation($message->sender->id, $message->conversation_id, htmlspecialchars($content), FORMAT_HTML);
 }
-
-/**
- * Send a request to update the last time synced
- */
-
-
 /**
  * Script finished
  */

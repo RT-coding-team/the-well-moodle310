@@ -51,6 +51,13 @@ class CurlUtility
     private $token = '';
 
     /**
+     * The id of the specific box (if required)
+     *
+     * @var string
+     */
+    private $boxId = '';
+
+    /**
      * Set up the class
      *
      * @param string $url The URL
@@ -58,7 +65,7 @@ class CurlUtility
      * @throws InvalidArgumentException     If the URL is not set
 
      */
-    public function __construct($url, $token = '') {
+    public function __construct($url, $token = '', $boxId = '') {
         if ($url === '') {
             throw new InvalidArgumentException('You must provide a valid URL.');
         }
@@ -72,6 +79,7 @@ class CurlUtility
             $this->url = $url;
         }
         $this->token = $token;
+        $this->boxId = $boxId;
     }
 
     /**
@@ -98,6 +106,9 @@ class CurlUtility
         }
         if ($this->token !== '') {
             $headers[] = 'Authorization: Bearer ' . $this->token;
+        }
+        if ($this->boxId !== '') {
+            $headers[] = 'X-boxid: ' . $this->boxId;
         }
         if (($filepath) && ($method !== 'POST')) {
             throw new InvalidArgumentException('If you supply a filepath, the method must be POST.');
