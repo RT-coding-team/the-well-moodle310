@@ -14,16 +14,25 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 /**
- * Sends messages to Rocketchat
+ * Sends messages to Rocketchat.
+ *
+ * If you want to use on command line, use `php push_messages.php true`
+ *
  * @TODO Limit messages based on the provided Timestamp
- * @TODO Uncomment the push of attachments to the API
- * @TODO Send the request to update the time synced
  */
+$cliScript = false;
+if ((isset($argv)) && (count($argv) === 2)) {
+    $cliScript = boolval($argv[1]);
+}
+define('CLI_SCRIPT', $cliScript);
+set_time_limit(0);
+
 require_once(dirname(dirname(dirname(__FILE__))) . DIRECTORY_SEPARATOR . 'config.php');
 require_once($CFG->libdir . DIRECTORY_SEPARATOR . 'filelib.php');
 require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'CurlUtility.php');
 require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Attachment.php');
-
+// Uncomment if you want to disable emailing along with sending chat messages
+//$CFG->noemailever = true;
 $url = get_config('local_chat_attachments', 'messaging_url');
 $token = get_config('local_chat_attachments', 'messaging_token');
 $machineIdFile = DIRECTORY_SEPARATOR . 'etc' . DIRECTORY_SEPARATOR . 'machine-id';
@@ -128,7 +137,7 @@ $query = 'SELECT m.id, m.conversationid, m.subject, m.fullmessagehtml, m.timecre
         's.username as sender_username, s.email as sender_email, r.id as recipient_id, r.username as recipient_username, ' .
         'r.email as recipient_email FROM {messages} AS m INNER JOIN {message_conversation_members} AS mcm ON m.conversationid=mcm.conversationid ' .
         'INNER JOIN {user} AS s ON mcm.userid = s.id INNER JOIN {user} AS r ON m.useridfrom = r.id ' .
-        'WHERE m.useridfrom <> mcm.userid ORDER BY m.timecreated ASC';
+        'WHERE m.useridfrom <> mcm.userid AND m.from_rocketchat = 0 ORDER BY m.timecreated ASC';
 $chats = $DB->get_records_sql($query);
 foreach ($chats as $chat) {
     $message = htmlspecialchars_decode($chat->fullmessagehtml);
@@ -167,7 +176,7 @@ echo '</pre><br>';
 /**
  * Send the message payload to the API
  */
-echo 'Sending POST request to ' . $url . 'messages/<br>';
+echo 'Sending POST request to ' . $url . 'messages<br>';
 $curl->makeRequest('messages', 'POST', json_encode($payload), null, true);
 echo 'The response was ' . $curl->responseCode . '<br>';
 
@@ -184,10 +193,15 @@ foreach ($attachments as $attachment) {
     if ((!$filepath) || (!file_exists($filepath))) {
         continue;
     }
-    //Uncomment when the API is working
-    $response = $curl->makeRequest('attachments', 'POST', $attachment->toArray(), $filepath);
-    echo 'File: ' . basename($filepath) . ' status: ' . $curl->responseCode . '<br>';
-    echo 'Send Attachment: ' . basename($filepath) . '<br>';
+    //Check if file exists.  If returns 404, then send file
+    $curl->makeRequest('attachments/' . $attachment->id . '/exists', 'GET', []);
+    if ($curl->responseCode === 404) {
+        $response = $curl->makeRequest('attachments', 'POST', $attachment->toArray(), $filepath);
+        echo '<strong>File</strong>: ' . basename($filepath) . ' <strong>status</strong>: ' . $curl->responseCode . ' with <strong>id</strong>: ' . $attachment->id . '<br>';
+        echo 'Send Attachment: ' . basename($filepath) . '<br>';
+    } else {
+        echo 'File already exists: ' . basename($filepath) . '<br>';
+    }
 }
 
 /**
@@ -196,18 +210,21 @@ foreach ($attachments as $attachment) {
 echo 'Retrieving new messages<br>';
 echo 'Sending GET request to ' . $url . 'messages/' . $lastSync . '<br>';
 $response = $curl->makeRequest('messages/' . $lastSync, 'GET', [], null, true);
-echo 'The Received Response:<br><pre>';
-echo json_encode(json_decode($response), JSON_PRETTY_PRINT);
-echo '</pre><br>';
+// echo 'The Received Response:<br><pre>';
+// echo json_encode(json_decode($response), JSON_PRETTY_PRINT);
+// echo '</pre><br>';
 $newMessages = json_decode($response);
+echo 'Total Messages Received: ' . number_format(count($newMessages)) . '<br>';
 if (count($newMessages) == 0) {
     echo 'There are no new messages.<br>';
+    echo '<p>&#129299;&#128077; Script Complete!</p>';
     exit();
 }
 
 /**
  * For each message, retrieve the attachment, save it to moodle, and save the new message.
  */
+$count = 1;
 foreach ($newMessages as $message) {
     $content = $message->message;
     $html = htmlspecialchars_decode($message->message);
@@ -231,7 +248,15 @@ foreach ($newMessages as $message) {
         $content = $attachment->toString();
     }
     // Location in messages/classes/api.php
-    \core_message\api::send_message_to_conversation($message->sender->id, $message->conversation_id, htmlspecialchars($content), FORMAT_HTML);
+    echo 'Sending message #' . $count . '<br>';
+    $message = \core_message\api::send_message_to_conversation(
+        $message->sender->id,
+        $message->conversation_id,
+        htmlspecialchars($content),
+        FORMAT_HTML
+    );
+    $DB->execute('UPDATE {messages} SET from_rocketchat = 1 WHERE id = ?', [$message->id]);
+    $count++;
 }
 /**
  * Script finished
