@@ -100,15 +100,9 @@ class CurlUtility
     {
         $url = $this->url . '' . ltrim($path, '/');
         $method = strtoupper($method);
-        $headers = [];
+        $headers = $this->getHeaders();
         if ($isJson) {
             $headers[] = 'Content-Type:application/json';
-        }
-        if ($this->token !== '') {
-            $headers[] = 'Authorization: Bearer ' . $this->token;
-        }
-        if ($this->boxId !== '') {
-            $headers[] = 'X-boxid: ' . $this->boxId;
         }
         if (($filepath) && ($method !== 'POST')) {
             throw new InvalidArgumentException('If you supply a filepath, the method must be POST.');
@@ -185,10 +179,7 @@ class CurlUtility
     public function downloadFile($sourcePath, $destination)
     {
         $url = $this->url . '' . ltrim($sourcePath, '/');
-        $headers = [];
-        if ($this->token !== '') {
-            $headers[] = 'Authorization: Bearer ' . $this->token;
-        }
+        $headers = $this->getHeaders();
         $write = fopen($destination, 'w+b');
         //Here is the file we are downloading, replace spaces with %20
         $ch = curl_init(str_replace(' ', '%20', $url));
@@ -219,5 +210,23 @@ class CurlUtility
             $fieldsString .= $key.'='.$value.'&';
         }
         return rtrim($fieldsString, '&');
+    }
+
+    /**
+     * Get the headers.
+     *
+     * @return  array   An array of headers.
+     * @access  private
+     */
+    private function getHeaders()
+    {
+        $headers = [];
+        if ($this->token !== '') {
+            $headers[] = 'Authorization: Bearer ' . $this->token;
+        }
+        if ($this->boxId !== '') {
+            $headers[] = 'X-boxid: ' . $this->boxId;
+        }
+        return $headers;
     }
 }
