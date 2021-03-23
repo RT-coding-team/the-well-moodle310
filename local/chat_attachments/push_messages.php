@@ -30,6 +30,7 @@ set_time_limit(0);
 require_once(dirname(dirname(dirname(__FILE__))) . DIRECTORY_SEPARATOR . 'config.php');
 require_once($CFG->libdir . DIRECTORY_SEPARATOR . 'filelib.php');
 require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'CurlUtility.php');
+require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'FileStorageUtility.php');
 require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Attachment.php');
 // Uncomment if you want to disable emailing along with sending chat messages
 //$CFG->noemailever = true;
@@ -52,6 +53,9 @@ if ($url === '') {
 }
 
 $curl = new CurlUtility($url, $token, $boxId);
+$fs = get_file_storage();
+$systemContext = context_system::instance();
+$storage = new FileStorageUtility($fs, $systemContext->id);
 
 /**
  * Retrieve the last time we synced
@@ -185,11 +189,9 @@ echo 'The response was ' . $curl->responseCode . '<br>';
  *
  */
 echo 'Total Attachments to send: ' . count($attachments) . '<br>';
-$fs = get_file_storage();
-$systemContext = context_system::instance();
 echo 'Sending attachments<br>';
 foreach ($attachments as $attachment) {
-    $filepath = $attachment->getFilePath($fs, $systemContext->id, 'chat_attachment');
+    $filepath = $storage->retrieve($attachment->id, $attachment->filepath, $attachment->filename);
     if ((!$filepath) || (!file_exists($filepath))) {
         continue;
     }
@@ -210,9 +212,9 @@ foreach ($attachments as $attachment) {
 echo 'Retrieving new messages<br>';
 echo 'Sending GET request to ' . $url . 'messages/' . $lastSync . '<br>';
 $response = $curl->makeRequest('messages/' . $lastSync, 'GET', [], null, true);
-// echo 'The Received Response:<br><pre>';
-// echo json_encode(json_decode($response), JSON_PRETTY_PRINT);
-// echo '</pre><br>';
+echo 'The Received Response:<br><pre>';
+echo json_encode(json_decode($response), JSON_PRETTY_PRINT);
+echo '</pre><br>';
 $newMessages = json_decode($response);
 echo 'Total Messages Received: ' . number_format(count($newMessages)) . '<br>';
 if (count($newMessages) == 0) {
@@ -244,7 +246,8 @@ foreach ($newMessages as $message) {
             echo '<p>&#10060; Unable to download the file: ' . $attachment->filename . '</p>';
             continue;
         }
-        $attachment->store($fs, $systemContext->id, 'chat_attachment', $tempPath);
+        $attachment->id = $storage->store($attachment->filename, $tempPath);
+        echo 'Attachment stored with id: ' . $attachment->id . '<br>';
         $content = $attachment->toString();
     }
     // Location in messages/classes/api.php
@@ -258,6 +261,7 @@ foreach ($newMessages as $message) {
     $DB->execute('UPDATE {messages} SET from_rocketchat = 1 WHERE id = ?', [$message->id]);
     $count++;
 }
+
 /**
  * Script finished
  */
