@@ -58,6 +58,7 @@ class ReportingUtility
      *
      * errors:      An array of errors that occurred
      * logs:        An array of log messages
+     * payloads:    Data being sent to or received from the API (json encoded string)
      * progress:    If we are current in a progress loop it will contain keys: current, total, and title.
      * results:     An array of results for the task.
      *
@@ -67,6 +68,7 @@ class ReportingUtility
     protected $data = [
         'errors'    =>  [],
         'logs'      =>  [],
+        'payloads'  =>  [],
         'progress'  =>  null,
         'results'   =>  []
     ];
@@ -140,6 +142,34 @@ class ReportingUtility
             $this->save();
         } else {
             $this->print('INFO', $item);
+        }
+    }
+
+    /**
+     * Save a payload for a specific request.
+     *
+     * @param  string   $key        The key of the payload. Use _ for seperating words.
+     * @param  array    $payload    The actual payload.
+     * @return void
+     * @access public
+     */
+    public function savePayload($key, $payload = [])
+    {
+        if (count($payload) === 0) {
+            return;
+        }
+        $this->data['payloads'][$key] = json_encode($payload, JSON_PRETTY_PRINT);
+        $prettyKey = ucwords(str_replace('_', ' ', $key));
+        $item = [
+            'category'      =>  'payload',
+            'message'       =>  'Storing payload for ' . $prettyKey . '(' . $key . ')',
+            'pretty_time'   =>  date('g:i:s A'),
+            'timestamp'     =>  time()
+        ];
+        if ($this->toFile) {
+            $this->save();
+        } else {
+            $this->print('PAYLOAD', $item);
         }
     }
 
