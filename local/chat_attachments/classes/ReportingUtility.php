@@ -169,6 +169,138 @@ class ReportingUtility
     }
 
     /**
+     * Start progress reporting
+     *
+     * @param  string   $title The title of the progress being tracked
+     * @param  integer  $total The total to complete
+     * @return void
+     * @access public
+     */
+    public function startProgress($title, $total)
+    {
+        $this->data['progress'] = [
+            'current'   =>  0,
+            'error'     =>  0,
+            'title'     =>  $title,
+            'total'     =>  $total
+        ];
+        $item = [
+            'category'      =>  'progress',
+            'message'       =>  'Starting progress for ' . $title . '.',
+            'pretty_time'   =>  date('g:i:s A'),
+            'timestamp'     =>  time()
+        ];
+        if ($this->toFile) {
+            $this->save();
+        } else {
+            $this->print('PROGRESS', $item);
+        }
+    }
+
+    /**
+     * Get the total success in the progress
+     *
+     * @return integer  The total successes
+     * @access public
+     */
+    public function getProgressSuccess()
+    {
+        if (!$this->data['progress']) {
+            return 0;
+        }
+        return $this->data['progress']['current'];
+    }
+
+    /**
+     * Report progress success. Increments count.
+     *
+     * @return void
+     * @access public
+     */
+    public function reportProgressSuccess()
+    {
+        if (!$this->data['progress']) {
+            return;
+        }
+        $this->data['progress']['current'] += 1;
+        $item = [
+            'category'      =>  'progress',
+            'message'       =>  'Current progress ' . $this->data['progress']['current'] . ' of ' . $this->data['progress']['total'] . '.',
+            'pretty_time'   =>  date('g:i:s A'),
+            'timestamp'     =>  time()
+        ];
+        if ($this->toFile) {
+            $this->save();
+        } else {
+            $this->print('PROGRESS', $item);
+        }
+    }
+
+    /**
+     * Get the total errors in the progress
+     *
+     * @return integer  The total errors
+     * @access public
+     */
+    public function getProgressError()
+    {
+        if (!$this->data['progress']) {
+            return 0;
+        }
+        return $this->data['progress']['error'];
+    }
+
+    /**
+     * Report progress failure. Increments error.
+     *
+     * @return void
+     * @access public
+     */
+    public function reportProgressError()
+    {
+        if (!$this->data['progress']) {
+            return;
+        }
+        $this->data['progress']['error'] += 1;
+        $item = [
+            'category'      =>  'progress',
+            'message'       =>  'Current errors ' . $this->data['progress']['error'] . ' of ' . $this->data['progress']['total'] . '.',
+            'pretty_time'   =>  date('g:i:s A'),
+            'timestamp'     =>  time()
+        ];
+        if ($this->toFile) {
+            $this->save();
+        } else {
+            $this->print('PROGRESS', $item);
+        }
+    }
+
+    /**
+     * Stop progress reporting
+     *
+     * @return void
+     * @access public
+     */
+    public function stopProgress()
+    {
+        if (!$this->data['progress']) {
+            return;
+        }
+        $item = [
+            'category'      =>  'progress',
+            'message'       =>  'Stopping progress for ' . $this->data['progress']['title'] . '.',
+            'pretty_time'   =>  date('g:i:s A'),
+            'timestamp'     =>  time()
+        ];
+        $this->data['progress'] = null;
+        if ($this->toFile) {
+            $this->save();
+        } else {
+            $this->print('PROGRESS', $item);
+        }
+    }
+
+    /**
      * Print message to screen
      *
      * @param   string  $type       The type of message

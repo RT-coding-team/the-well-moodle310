@@ -210,8 +210,7 @@ if ($curl->responseCode === 200) {
  *
  */
 $reporting->info('Sending attachments.');
-$sent = 0;
-$failed = 0;
+$reporting->startProgress('Sending attachments', count($attachments));
 foreach ($attachments as $attachment) {
     $filepath = $storage->retrieve($attachment->id, $attachment->filepath, $attachment->filename);
     if ((!$filepath) || (!file_exists($filepath))) {
@@ -222,19 +221,19 @@ foreach ($attachments as $attachment) {
     if ($curl->responseCode === 404) {
         $response = $curl->makeRequest('attachments', 'POST', $attachment->toArray(), $filepath);
         if ($curl->responseCode === 200) {
-            $sent += 1;
+            $reporting->reportProgressSuccess();
         } else {
-            $failed += 1;
+            $reporting->reportProgressError();
         }
-        // echo '<strong>File</strong>: ' . basename($filepath) . ' <strong>status</strong>: ' . $curl->responseCode . ' with <strong>id</strong>: ' . $attachment->id . '<br>';
-        // echo 'Send Attachment: ' . basename($filepath) . '<br>';
+        $reporting->info('Sent attachment #' . $attachment->id . 'with status ' . $curl->responseCode . '.', 'send_attachments');
     } else {
-        // echo 'File already exists: ' . basename($filepath) . '<br>';
+        $reporting->info('Attachment #' . $attachment->id . ' previously sent.', 'send_attachments');
+        $reporting->reportProgressSuccess();
     }
 }
-$reporting->saveResult('total_attachments_sent', $sent);
-$reporting->saveResult('total_attachments_sent_failed', $failed);
-
+$reporting->saveResult('total_attachments_sent', $reporting->getProgressSuccess());
+$reporting->saveResult('total_attachments_sent_failed', $reporting->getProgressError());
+$reporting->stopProgress();
 /**
  * Now request new messages from the API
  */
@@ -256,9 +255,7 @@ $reporting->info('Total Messages Received: ' . number_format(count($newMessages)
 /**
  * For each message, retrieve the attachment, save it to moodle, and save the new message.
  */
-$count = 1;
-$received = 0;
-$failed = 0;
+$reporting->startProgress('Saving retrieved messages & attachments', count($newMessages));
 foreach ($newMessages as $message) {
     $content = $message->message;
     $html = htmlspecialchars_decode($message->message);
@@ -269,22 +266,23 @@ foreach ($newMessages as $message) {
          */
         if ($attachment->id <= 0) {
             // cannot get the attachment.  Move along.
+            $reporting->reportProgressError();
             continue;
         }
+
         // echo 'Saving New Attachment: ' . basename($attachment->filename) . '<br>';
         $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $attachment->filename;
         $downloaded = $curl->downloadFile('attachments/' . $attachment->id, $tempPath);
         if (!$downloaded) {
-            $reporting->error('Unable to download the file: ' . $attachment->filename . '.', 'receive_message');
-            $failed += 1;
+            $reporting->error('Unable to download attachment # ' . $attachment->id . '.', 'receive_message');
+            $reporting->reportProgressError();
             continue;
         }
-        $received += 1;
+        $reporting->info('Received attachment #' . $attachment->id . '.', 'receive_message');
         $attachment->id = $storage->store($attachment->filename, $tempPath);
         $content = $attachment->toString();
     }
     // Location in messages/classes/api.php
-    // echo 'Sending message #' . $count . '<br>';
     $message = \core_message\api::send_message_to_conversation(
         $message->sender->id,
         $message->conversation_id,
@@ -292,10 +290,12 @@ foreach ($newMessages as $message) {
         FORMAT_HTML
     );
     $DB->execute('UPDATE {messages} SET from_rocketchat = 1 WHERE id = ?', [$message->id]);
-    $count++;
+    $reporting->reportProgressSuccess();
 }
-$reporting->saveResult('total_attachments_received', $received);
-$reporting->saveResult('total_attachments_received_failed', $failed);
+$reporting->saveResult('total_attachments_received', $reporting->getProgressSuccess());
+$reporting->saveResult('total_attachments_received_failed', $reporting->getProgressError());
+$reporting->stopProgress();
+
 $reporting->info('Checking if the API is missing attachments.');
 $reporting->info('Sending POST request to ' . $url . 'attachments/missing.');
 $response = $curl->makeRequest('attachments/missing', 'POST', [], null, true);
@@ -314,15 +314,18 @@ if ((!$response) || (count($missing) === 0)) {
 }
 $sent = 0;
 $errored = 0;
+$reporting->startProgress('Uploading missing attachments', count($missing));
 foreach ($missing as $id) {
     $file = $storage->findById($id);
     if (!$file) {
         $reporting->error('Unable to find missing attachment with id: ' . $id . '.', 'missing_attachments');
+        $reporting->reportProgressError();
         continue;
     }
     $filepath = $storage->retrieve($id, $file->filepath, $file->filename);
     if ((!$filepath) || (!file_exists($filepath))) {
         $reporting->error('Unable to move the attachment with id: ' . $id . '.', 'missing_attachments');
+        $reporting->reportProgressError();
         continue;
     }
     $parts = explode('/', $file->mimetype);
@@ -338,14 +341,15 @@ foreach ($missing as $id) {
     ];
     $response = $curl->makeRequest('attachments', 'POST', $data, $filepath);
     if ($curl->responseCode === 200) {
-        $sent += 1;
+        $reporting->reportProgressSuccess();
     } else {
-        $errored += 1;
+        $reporting->reportProgressError();
     }
-    // echo '<strong>File</strong>: ' . basename($filepath) . ' <strong>status</strong>: ' . $curl->responseCode . ' with <strong>id</strong>: ' . $id . '<br>';
+    $reporting->info('Sent attachment #' . $id . ' with status ' . $curl->responseCode . '.', 'missing_attachments');
 }
-$reporting->saveResult('total_missing_attachments_sent', $sent);
-$reporting->saveResult('total_missing_attachments_failed_sending', $errored);
+$reporting->saveResult('total_missing_attachments_sent', $reporting->getProgressSuccess());
+$reporting->saveResult('total_missing_attachments_failed_sending', $reporting->getProgressError());
+$reporting->stopProgress();
 /**
  * Script finished
  */
