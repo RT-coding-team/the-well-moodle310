@@ -258,7 +258,7 @@ foreach ($newMessages as $message) {
         $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $attachment->filename;
         $downloaded = $curl->downloadFile('attachments/' . $attachment->id, $tempPath);
         if (!$downloaded) {
-            $reporting->error('Unable to download the file: ' . $attachment->filename . '.');
+            $reporting->error('Unable to download the file: ' . $attachment->filename . '.', 'receive_message');
             continue;
         }
         $attachment->id = $storage->store($attachment->filename, $tempPath);
@@ -293,12 +293,12 @@ if ((!$response) || (count($missing) === 0)) {
 foreach ($missing as $id) {
     $file = $storage->findById($id);
     if (!$file) {
-        $reporting->error('Unable to find missing attachment with id: ' . $id . '.');
+        $reporting->error('Unable to find missing attachment with id: ' . $id . '.', 'missing_attachments');
         continue;
     }
     $filepath = $storage->retrieve($id, $file->filepath, $file->filename);
     if ((!$filepath) || (!file_exists($filepath))) {
-        $reporting->error('Unable to move the attachment with id: ' . $id . '.');
+        $reporting->error('Unable to move the attachment with id: ' . $id . '.', 'missing_attachments');
         continue;
     }
     $parts = explode('/', $file->mimetype);

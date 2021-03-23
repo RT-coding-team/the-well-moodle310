@@ -98,16 +98,18 @@ class ReportingUtility
     /**
      * Report an error
      *
-     * @param  string $message The message of the error
-     * @return void
-     * @access public
+     * @param   string $message     The message of the error
+     * @param   string $category    A category to group log messages (default: error)
+     * @return  void
+     * @access  public
      */
-    public function error($message)
+    public function error($message, $category = 'error')
     {
         $error = [
+            'category'      =>  $category,
             'message'       =>  $message,
-            'timestamp'     =>  time(),
-            'pretty_time'   =>  date('g:i:s A')
+            'pretty_time'   =>  date('g:i:s A'),
+            'timestamp'     =>  time()
         ];
         $this->data['errors'][] = $error;
         if ($this->toFile) {
@@ -121,15 +123,17 @@ class ReportingUtility
      * Report a message
      *
      * @param  string $message The message to log
+     * @param   string $category    A category to group log messages (default: info)
      * @return void
      * @access public
      */
-    public function info($message)
+    public function info($message, $category = 'info')
     {
         $item = [
+            'category'      =>  $category,
             'message'       =>  $message,
-            'timestamp'     =>  time(),
-            'pretty_time'   =>  date('g:i:s A')
+            'pretty_time'   =>  date('g:i:s A'),
+            'timestamp'     =>  time()
         ];
         $this->data['logs'][] = $item;
         if ($this->toFile) {
@@ -149,7 +153,7 @@ class ReportingUtility
      */
     protected function print($type, $message)
     {
-        echo $message['pretty_time'] . ': [' . $type . '] ' . $message['message'] . $this->printLineBreak;
+        echo $message['pretty_time'] . ': [' . $type . '] ' . $message['message'] . ' (' . $message['category'] . ')' . $this->printLineBreak;
     }
 
     /**
