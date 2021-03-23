@@ -35,6 +35,12 @@ class FileStorageUtility
     public $fileArea = 'chat_attachment';
 
     /**
+     * An instance of Moodle's database
+     *
+     * @var $DB
+     */
+    protected $db = null;
+    /**
      * Our file storage context
      *
      * @var file_storage
@@ -53,15 +59,37 @@ class FileStorageUtility
     /**
      * Set up the FileStorage utility
      *
+     * @param object        $database       Moodle's database
      * @param file_storage  $fileStorage    Moodle's file storage system
      * @param integer       $contextId      The id of the context to store files
      *
      * @access public
      */
-    public function __construct($fileStorage, $contextId)
+    public function __construct($database, $fileStorage, $contextId)
     {
+        $this->db = $database;
         $this->storage = $fileStorage;
         $this->contextId = $contextId;
+    }
+
+    /**
+     * Find the file by the given id
+     *
+     * @param  integer  $id     The id of the given file
+     * @return object|null      The file object of null if missing
+     *
+     * @access public
+     */
+    public function findById($id)
+    {
+        $file = $this->db->get_record_sql(
+            'SELECT * FROM {files} WHERE itemid = ? AND filearea = ? AND component = ? AND filename != ?',
+            [$id, $this->fileArea, $this->component, '.']
+        );
+        if (!$file) {
+            return null;
+        }
+        return $file;
     }
 
     /**

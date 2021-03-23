@@ -55,7 +55,7 @@ if ($url === '') {
 $curl = new CurlUtility($url, $token, $boxId);
 $fs = get_file_storage();
 $systemContext = context_system::instance();
-$storage = new FileStorageUtility($fs, $systemContext->id);
+$storage = new FileStorageUtility($DB, $fs, $systemContext->id);
 
 /**
  * Retrieve the last time we synced
@@ -247,7 +247,6 @@ foreach ($newMessages as $message) {
             continue;
         }
         $attachment->id = $storage->store($attachment->filename, $tempPath);
-        echo 'Attachment stored with id: ' . $attachment->id . '<br>';
         $content = $attachment->toString();
     }
     // Location in messages/classes/api.php
@@ -261,7 +260,46 @@ foreach ($newMessages as $message) {
     $DB->execute('UPDATE {messages} SET from_rocketchat = 1 WHERE id = ?', [$message->id]);
     $count++;
 }
-
+echo 'Checking if the API is missing attachments.<br>';
+echo 'Sending POST request to ' . $url . 'attachments/missing<br>';
+$response = $curl->makeRequest('attachments/missing', 'POST', [], null, true);
+echo 'The Received Response:<br><pre>';
+echo json_encode(json_decode($response), JSON_PRETTY_PRINT);
+echo '</pre><br>';
+$missing = json_decode($response);
+if ((!$response) || (count($missing) === 0)) {
+    /**
+     * Script finished
+     */
+    echo 'There are no missing attachments.<br>';
+    echo '<p>&#129299;&#128077; Script Complete!</p>';
+    exit();
+}
+foreach ($missing as $id) {
+    $file = $storage->findById($id);
+    if (!$file) {
+        echo 'Unable to find missing attachment with id: ' . $id . '<br>';
+        continue;
+    }
+    $filepath = $storage->retrieve($id, $file->filepath, $file->filename);
+    if ((!$filepath) || (!file_exists($filepath))) {
+        echo 'Unable to move the attachment with id: ' . $id . '<br>';
+        continue;
+    }
+    $parts = explode('/', $file->mimetype);
+    $type = $parts[0];
+    if ($type === 'image') {
+        $type = 'photo';
+    }
+    $data = [
+        'type'      =>  $type,
+        'id'        =>  $id,
+        'filepath'  =>  $file->filepath,
+        'filename'  =>  $file->filename
+    ];
+    $response = $curl->makeRequest('attachments', 'POST', $data, $filepath);
+    echo '<strong>File</strong>: ' . basename($filepath) . ' <strong>status</strong>: ' . $curl->responseCode . ' with <strong>id</strong>: ' . $id . '<br>';
+}
 /**
  * Script finished
  */
