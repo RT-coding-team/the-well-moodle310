@@ -264,7 +264,6 @@ foreach ($newMessages as $message) {
             continue;
         }
 
-        // echo 'Saving New Attachment: ' . basename($attachment->filename) . '<br>';
         $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $attachment->filename;
         $downloaded = $curl->downloadFile('attachments/' . $attachment->id, $tempPath);
         if (!$downloaded) {
