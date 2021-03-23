@@ -144,6 +144,31 @@ class ReportingUtility
     }
 
     /**
+     * Save a specific result of the script.
+     *
+     * @param  string   $key   The key of the result. Use _ for seperating words.
+     * @param  mixed    $value The value of the result
+     * @return void
+     * @access public
+     */
+    public function saveResult($key, $value)
+    {
+        $this->data['results'][$key] = $value;
+        $prettyKey = ucwords(str_replace('_', ' ', $key));
+        $item = [
+            'category'      =>  'result',
+            'message'       =>  $prettyKey . ' = ' . $value,
+            'pretty_time'   =>  date('g:i:s A'),
+            'timestamp'     =>  time()
+        ];
+        if ($this->toFile) {
+            $this->save();
+        } else {
+            $this->print('RESULT', $item);
+        }
+    }
+
+    /**
      * Print message to screen
      *
      * @param   string  $type       The type of message

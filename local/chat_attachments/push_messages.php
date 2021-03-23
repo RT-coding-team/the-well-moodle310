@@ -61,6 +61,7 @@ if ((!$boxId) || ($boxId === '')) {
     $reporting->error('Unable to retrieve the Box ID.');
     exit;
 }
+$reporting->saveResult('box_id', $boxId);
 if ($url === '') {
     $reporting->error('No URL provided!');
     exit;
@@ -77,8 +78,8 @@ $storage = new FileStorageUtility($DB, $fs, $systemContext->id);
  */
 $reporting->info('Sending GET request to ' . $url . 'messageStatus.');
 $lastSync = $curl->makeRequest('messageStatus', 'GET', []);
-$reporting->info('Last sync time was ' . date('F j, Y H:i:s', $lastSync) . ' (' . $lastSync . ').');
-
+$reporting->saveResult('last_time_synced', $lastSync);
+$reporting->saveResult('last_time_synced_pretty', date('F j, Y H:i:s', $lastSync));
 /**
  * Create the course payload to send to the API
  */
@@ -198,13 +199,19 @@ foreach ($chats as $chat) {
 $reporting->info('Sending POST request to ' . $url . 'messages.');
 $curl->makeRequest('messages', 'POST', json_encode($payload), null, true);
 $reporting->info('The response was ' . $curl->responseCode . '.');
+if ($curl->responseCode === 200) {
+    $reporting->saveResult('total_messages_sent', count($chats));
+} else {
+    $reporting->saveResult('total_messages_sent', 0);
+}
 
 /**
  * Send each attachment to the API
  *
  */
-$reporting->info('Total Attachments to send: ' . count($attachments) . '.');
 $reporting->info('Sending attachments.');
+$sent = 0;
+$failed = 0;
 foreach ($attachments as $attachment) {
     $filepath = $storage->retrieve($attachment->id, $attachment->filepath, $attachment->filename);
     if ((!$filepath) || (!file_exists($filepath))) {
@@ -214,12 +221,19 @@ foreach ($attachments as $attachment) {
     $curl->makeRequest('attachments/' . $attachment->id . '/exists', 'GET', []);
     if ($curl->responseCode === 404) {
         $response = $curl->makeRequest('attachments', 'POST', $attachment->toArray(), $filepath);
+        if ($curl->responseCode === 200) {
+            $sent += 1;
+        } else {
+            $failed += 1;
+        }
         // echo '<strong>File</strong>: ' . basename($filepath) . ' <strong>status</strong>: ' . $curl->responseCode . ' with <strong>id</strong>: ' . $attachment->id . '<br>';
         // echo 'Send Attachment: ' . basename($filepath) . '<br>';
     } else {
         // echo 'File already exists: ' . basename($filepath) . '<br>';
     }
 }
+$reporting->saveResult('total_attachments_sent', $sent);
+$reporting->saveResult('total_attachments_sent_failed', $failed);
 
 /**
  * Now request new messages from the API
@@ -231,6 +245,7 @@ $response = $curl->makeRequest('messages/' . $lastSync, 'GET', [], null, true);
 // echo json_encode(json_decode($response), JSON_PRETTY_PRINT);
 // echo '</pre><br>';
 $newMessages = json_decode($response);
+$reporting->saveResult('total_messages_received', count($newMessages));
 if (count($newMessages) == 0) {
     $reporting->info('There are no new messages.');
     $reporting->info('Script Complete!');
@@ -242,6 +257,8 @@ $reporting->info('Total Messages Received: ' . number_format(count($newMessages)
  * For each message, retrieve the attachment, save it to moodle, and save the new message.
  */
 $count = 1;
+$received = 0;
+$failed = 0;
 foreach ($newMessages as $message) {
     $content = $message->message;
     $html = htmlspecialchars_decode($message->message);
@@ -259,8 +276,10 @@ foreach ($newMessages as $message) {
         $downloaded = $curl->downloadFile('attachments/' . $attachment->id, $tempPath);
         if (!$downloaded) {
             $reporting->error('Unable to download the file: ' . $attachment->filename . '.', 'receive_message');
+            $failed += 1;
             continue;
         }
+        $received += 1;
         $attachment->id = $storage->store($attachment->filename, $tempPath);
         $content = $attachment->toString();
     }
@@ -275,6 +294,8 @@ foreach ($newMessages as $message) {
     $DB->execute('UPDATE {messages} SET from_rocketchat = 1 WHERE id = ?', [$message->id]);
     $count++;
 }
+$reporting->saveResult('total_attachments_received', $received);
+$reporting->saveResult('total_attachments_received_failed', $failed);
 $reporting->info('Checking if the API is missing attachments.');
 $reporting->info('Sending POST request to ' . $url . 'attachments/missing.');
 $response = $curl->makeRequest('attachments/missing', 'POST', [], null, true);
@@ -282,6 +303,7 @@ $response = $curl->makeRequest('attachments/missing', 'POST', [], null, true);
 // echo json_encode(json_decode($response), JSON_PRETTY_PRINT);
 // echo '</pre><br>';
 $missing = json_decode($response);
+$reporting->saveResult('total_missing_attachments_requested', count($missing));
 if ((!$response) || (count($missing) === 0)) {
     /**
      * Script finished
@@ -290,6 +312,8 @@ if ((!$response) || (count($missing) === 0)) {
     $reporting->info('Script Complete!');
     exit();
 }
+$sent = 0;
+$errored = 0;
 foreach ($missing as $id) {
     $file = $storage->findById($id);
     if (!$file) {
@@ -313,8 +337,15 @@ foreach ($missing as $id) {
         'filename'  =>  $file->filename
     ];
     $response = $curl->makeRequest('attachments', 'POST', $data, $filepath);
+    if ($curl->responseCode === 200) {
+        $sent += 1;
+    } else {
+        $errored += 1;
+    }
     // echo '<strong>File</strong>: ' . basename($filepath) . ' <strong>status</strong>: ' . $curl->responseCode . ' with <strong>id</strong>: ' . $id . '<br>';
 }
+$reporting->saveResult('total_missing_attachments_sent', $sent);
+$reporting->saveResult('total_missing_attachments_failed_sending', $errored);
 /**
  * Script finished
  */
