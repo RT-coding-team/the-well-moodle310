@@ -90,7 +90,7 @@ class ReportingUtility
                 'You must provide a valid directory for storing the report file.'
             );
         }
-        $this->logFile =  rtrim($directory, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $this->filename;
+        $this->logFile = rtrim($directory, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $this->filename;
         if (file_exists($this->logFile)) {
             unlink($this->logFile);
         }
