@@ -20,20 +20,36 @@
  *
  * @TODO Limit messages based on the provided Timestamp
  */
+$logToFile = true;
 $cliScript = false;
-if ((isset($argv)) && (count($argv) === 2)) {
+if ((isset($argv)) && (isset($argv[1]))) {
     $cliScript = boolval($argv[1]);
+    $logToFile = false;
 }
+if ((isset($argv)) && (isset($argv[2]))) {
+    $logToFile = boolval($argv[2]);
+}
+if (isset($_GET['logging']) && ($_GET['logging'] === 'display')) {
+    $logToFile = false;
+}
+
 define('CLI_SCRIPT', $cliScript);
+
 set_time_limit(0);
 
 require_once(dirname(dirname(dirname(__FILE__))) . DIRECTORY_SEPARATOR . 'config.php');
 require_once($CFG->libdir . DIRECTORY_SEPARATOR . 'filelib.php');
+require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Attachment.php');
 require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'CurlUtility.php');
 require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'FileStorageUtility.php');
-require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Attachment.php');
+require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'ReportingUtility.php');
 // Uncomment if you want to disable emailing along with sending chat messages
 //$CFG->noemailever = true;
+
+$reporting = new ReportingUtility(dirname(__FILE__), $logToFile);
+if (!$cliScript) {
+    $reporting->printLineBreak = '<br>';
+}
 $url = get_config('local_chat_attachments', 'messaging_url');
 $token = get_config('local_chat_attachments', 'messaging_token');
 $machineIdFile = DIRECTORY_SEPARATOR . 'etc' . DIRECTORY_SEPARATOR . 'machine-id';
@@ -42,15 +58,14 @@ if (file_exists($machineIdFile)) {
     $boxId = trim(file_get_contents($machineIdFile));
 }
 if ((!$boxId) || ($boxId === '')) {
-    echo 'Unable to retrieve the Box ID<br>';
+    $reporting->error('Unable to retrieve the Box ID.');
     exit;
 }
-echo 'Sending Requests to: ' . $url . '<br>';
-
 if ($url === '') {
-    echo 'No URL provided!<br>';
+    $reporting->error('No URL provided!');
     exit;
 }
+$reporting->info('Sending Requests to: ' . $url . '.');
 
 $curl = new CurlUtility($url, $token, $boxId);
 $fs = get_file_storage();
@@ -60,9 +75,9 @@ $storage = new FileStorageUtility($DB, $fs, $systemContext->id);
 /**
  * Retrieve the last time we synced
  */
-echo 'Sending GET request to ' . $url . 'messageStatus<br>';
+$reporting->info('Sending GET request to ' . $url . 'messageStatus.');
 $lastSync = $curl->makeRequest('messageStatus', 'GET', []);
-echo 'Last Sync Time: ' . date('F j, Y H:i:s', $lastSync) . '(' . $lastSync . ')<br>';
+$reporting->info('Last sync time was ' . date('F j, Y H:i:s', $lastSync) . ' (' . $lastSync . ').');
 
 /**
  * Create the course payload to send to the API
@@ -121,16 +136,16 @@ foreach ($courses as $course) {
     }
     $payload[] = $data;
 }
-echo 'Our Course Payload:<br><pre>';
-echo json_encode($payload, JSON_PRETTY_PRINT);
-echo '</pre><br>';
+// echo 'Our Course Payload:<br><pre>';
+// echo json_encode($payload, JSON_PRETTY_PRINT);
+// echo '</pre><br>';
 
 /**
  * Send the course payload to the API
  */
-echo 'Sending POST request to ' . $url . 'courseRosters<br>';
+$reporting->info('Sending POST request to ' . $url . 'courseRosters.');
 $curl->makeRequest('courseRosters', 'POST', json_encode($payload), null, true);
-echo 'The response was ' . $curl->responseCode . '<br>';
+$reporting->info('The response was ' . $curl->responseCode . '.');
 
 /**
  * Gather up the messages to send to the API
@@ -173,23 +188,23 @@ foreach ($chats as $chat) {
     }
     $payload[] = $data;
 }
-echo 'Our Chat Payload:<br><pre>';
-echo json_encode($payload, JSON_PRETTY_PRINT);
-echo '</pre><br>';
+// echo 'Our Chat Payload:<br><pre>';
+// echo json_encode($payload, JSON_PRETTY_PRINT);
+// echo '</pre><br>';
 
 /**
  * Send the message payload to the API
  */
-echo 'Sending POST request to ' . $url . 'messages<br>';
+$reporting->info('Sending POST request to ' . $url . 'messages.');
 $curl->makeRequest('messages', 'POST', json_encode($payload), null, true);
-echo 'The response was ' . $curl->responseCode . '<br>';
+$reporting->info('The response was ' . $curl->responseCode . '.');
 
 /**
  * Send each attachment to the API
  *
  */
-echo 'Total Attachments to send: ' . count($attachments) . '<br>';
-echo 'Sending attachments<br>';
+$reporting->info('Total Attachments to send: ' . count($attachments) . '.');
+$reporting->info('Sending attachments.');
 foreach ($attachments as $attachment) {
     $filepath = $storage->retrieve($attachment->id, $attachment->filepath, $attachment->filename);
     if ((!$filepath) || (!file_exists($filepath))) {
@@ -199,29 +214,29 @@ foreach ($attachments as $attachment) {
     $curl->makeRequest('attachments/' . $attachment->id . '/exists', 'GET', []);
     if ($curl->responseCode === 404) {
         $response = $curl->makeRequest('attachments', 'POST', $attachment->toArray(), $filepath);
-        echo '<strong>File</strong>: ' . basename($filepath) . ' <strong>status</strong>: ' . $curl->responseCode . ' with <strong>id</strong>: ' . $attachment->id . '<br>';
-        echo 'Send Attachment: ' . basename($filepath) . '<br>';
+        // echo '<strong>File</strong>: ' . basename($filepath) . ' <strong>status</strong>: ' . $curl->responseCode . ' with <strong>id</strong>: ' . $attachment->id . '<br>';
+        // echo 'Send Attachment: ' . basename($filepath) . '<br>';
     } else {
-        echo 'File already exists: ' . basename($filepath) . '<br>';
+        // echo 'File already exists: ' . basename($filepath) . '<br>';
     }
 }
 
 /**
  * Now request new messages from the API
  */
-echo 'Retrieving new messages<br>';
-echo 'Sending GET request to ' . $url . 'messages/' . $lastSync . '<br>';
+$reporting->info('Retrieving new messages.');
+$reporting->info('Sending GET request to ' . $url . 'messages/' . $lastSync . '.');
 $response = $curl->makeRequest('messages/' . $lastSync, 'GET', [], null, true);
-echo 'The Received Response:<br><pre>';
-echo json_encode(json_decode($response), JSON_PRETTY_PRINT);
-echo '</pre><br>';
+// echo 'The Received Response:<br><pre>';
+// echo json_encode(json_decode($response), JSON_PRETTY_PRINT);
+// echo '</pre><br>';
 $newMessages = json_decode($response);
-echo 'Total Messages Received: ' . number_format(count($newMessages)) . '<br>';
 if (count($newMessages) == 0) {
-    echo 'There are no new messages.<br>';
-    echo '<p>&#129299;&#128077; Script Complete!</p>';
+    $reporting->info('There are no new messages.');
+    $reporting->info('Script Complete!');
     exit();
 }
+$reporting->info('Total Messages Received: ' . number_format(count($newMessages)) . '.');
 
 /**
  * For each message, retrieve the attachment, save it to moodle, and save the new message.
@@ -239,18 +254,18 @@ foreach ($newMessages as $message) {
             // cannot get the attachment.  Move along.
             continue;
         }
-        echo 'Saving New Attachment: ' . basename($attachment->filename) . '<br>';
+        // echo 'Saving New Attachment: ' . basename($attachment->filename) . '<br>';
         $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $attachment->filename;
         $downloaded = $curl->downloadFile('attachments/' . $attachment->id, $tempPath);
         if (!$downloaded) {
-            echo '<p>&#10060; Unable to download the file: ' . $attachment->filename . '</p>';
+            $reporting->error('Unable to download the file: ' . $attachment->filename . '.');
             continue;
         }
         $attachment->id = $storage->store($attachment->filename, $tempPath);
         $content = $attachment->toString();
     }
     // Location in messages/classes/api.php
-    echo 'Sending message #' . $count . '<br>';
+    // echo 'Sending message #' . $count . '<br>';
     $message = \core_message\api::send_message_to_conversation(
         $message->sender->id,
         $message->conversation_id,
@@ -260,30 +275,30 @@ foreach ($newMessages as $message) {
     $DB->execute('UPDATE {messages} SET from_rocketchat = 1 WHERE id = ?', [$message->id]);
     $count++;
 }
-echo 'Checking if the API is missing attachments.<br>';
-echo 'Sending POST request to ' . $url . 'attachments/missing<br>';
+$reporting->info('Checking if the API is missing attachments.');
+$reporting->info('Sending POST request to ' . $url . 'attachments/missing.');
 $response = $curl->makeRequest('attachments/missing', 'POST', [], null, true);
-echo 'The Received Response:<br><pre>';
-echo json_encode(json_decode($response), JSON_PRETTY_PRINT);
-echo '</pre><br>';
+// echo 'The Received Response:<br><pre>';
+// echo json_encode(json_decode($response), JSON_PRETTY_PRINT);
+// echo '</pre><br>';
 $missing = json_decode($response);
 if ((!$response) || (count($missing) === 0)) {
     /**
      * Script finished
      */
-    echo 'There are no missing attachments.<br>';
-    echo '<p>&#129299;&#128077; Script Complete!</p>';
+    $reporting->info('There are no missing attachments.');
+    $reporting->info('Script Complete!');
     exit();
 }
 foreach ($missing as $id) {
     $file = $storage->findById($id);
     if (!$file) {
-        echo 'Unable to find missing attachment with id: ' . $id . '<br>';
+        $reporting->error('Unable to find missing attachment with id: ' . $id . '.');
         continue;
     }
     $filepath = $storage->retrieve($id, $file->filepath, $file->filename);
     if ((!$filepath) || (!file_exists($filepath))) {
-        echo 'Unable to move the attachment with id: ' . $id . '<br>';
+        $reporting->error('Unable to move the attachment with id: ' . $id . '.');
         continue;
     }
     $parts = explode('/', $file->mimetype);
@@ -298,9 +313,9 @@ foreach ($missing as $id) {
         'filename'  =>  $file->filename
     ];
     $response = $curl->makeRequest('attachments', 'POST', $data, $filepath);
-    echo '<strong>File</strong>: ' . basename($filepath) . ' <strong>status</strong>: ' . $curl->responseCode . ' with <strong>id</strong>: ' . $id . '<br>';
+    // echo '<strong>File</strong>: ' . basename($filepath) . ' <strong>status</strong>: ' . $curl->responseCode . ' with <strong>id</strong>: ' . $id . '<br>';
 }
 /**
  * Script finished
  */
-echo '<p>&#129299;&#128077; Script Complete!</p>';
+$reporting->info('Script Complete!');
