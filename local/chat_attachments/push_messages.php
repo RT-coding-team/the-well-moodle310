@@ -137,9 +137,7 @@ foreach ($courses as $course) {
     }
     $payload[] = $data;
 }
-// echo 'Our Course Payload:<br><pre>';
-// echo json_encode($payload, JSON_PRETTY_PRINT);
-// echo '</pre><br>';
+$reporting->savePayload('course_rooster', $payload);
 
 /**
  * Send the course payload to the API
@@ -189,9 +187,7 @@ foreach ($chats as $chat) {
     }
     $payload[] = $data;
 }
-// echo 'Our Chat Payload:<br><pre>';
-// echo json_encode($payload, JSON_PRETTY_PRINT);
-// echo '</pre><br>';
+$reporting->savePayload('messages_to_send', $payload);
 
 /**
  * Send the message payload to the API
@@ -240,10 +236,8 @@ $reporting->stopProgress();
 $reporting->info('Retrieving new messages.');
 $reporting->info('Sending GET request to ' . $url . 'messages/' . $lastSync . '.');
 $response = $curl->makeRequest('messages/' . $lastSync, 'GET', [], null, true);
-// echo 'The Received Response:<br><pre>';
-// echo json_encode(json_decode($response), JSON_PRETTY_PRINT);
-// echo '</pre><br>';
 $newMessages = json_decode($response);
+$reporting->savePayload('messages_received', $newMessages);
 $reporting->saveResult('total_messages_received', count($newMessages));
 if (count($newMessages) == 0) {
     $reporting->info('There are no new messages.');
@@ -299,10 +293,8 @@ $reporting->stopProgress();
 $reporting->info('Checking if the API is missing attachments.');
 $reporting->info('Sending POST request to ' . $url . 'attachments/missing.');
 $response = $curl->makeRequest('attachments/missing', 'POST', [], null, true);
-// echo 'The Received Response:<br><pre>';
-// echo json_encode(json_decode($response), JSON_PRETTY_PRINT);
-// echo '</pre><br>';
 $missing = json_decode($response);
+$reporting->savePayload('missing_attachments', $missing);
 $reporting->saveResult('total_missing_attachments_requested', count($missing));
 if ((!$response) || (count($missing) === 0)) {
     /**
