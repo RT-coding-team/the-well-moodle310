@@ -267,7 +267,7 @@ if (count($newMessages) === 0) {
 
             $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $attachment->filename;
             $downloaded = $curl->downloadFile('attachments/' . $attachment->id, $tempPath);
-            if ($downloaded) {
+            if (!$downloaded) {
                 $reporting->error('Unable to download attachment # ' . $attachment->id . '.', 'receive_message');
                 $reporting->reportProgressError();
                 $failedMessages->add(
