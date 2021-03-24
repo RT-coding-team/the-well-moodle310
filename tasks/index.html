@@ -20,6 +20,27 @@
           <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
         </div>
       </div>
+      <div id="accordion" class="mb-3">
+        <div class="card">
+          <div class="card-header" id="heading-logs">
+            <h5 class="mb-0">
+              <div class="row">
+                <div class="col-11">
+                  <button class="btn btn-link" data-toggle="collapse" data-target="#logs-output" aria-expanded="true" aria-controls="logs-output">
+                    Logs
+                  </button>
+                </div>
+                <div class="col-1 text-right pt-2">&nbsp;</div>
+              </div>
+            </h5>
+          </div>
+
+          <div id="logs-output" class="collapse" aria-labelledby="heading-logs" data-parent="#accordion">
+            <div class="card-body">
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="row">
         <div class="col">
           <button type="button" class="btn btn-primary btn-block" id="sync"><i class="fas fa-sync"></i> Sync</button>
