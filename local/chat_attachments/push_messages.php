@@ -143,7 +143,7 @@ foreach ($courses as $course) {
     }
     $payload[] = $data;
 }
-$reporting->savePayload('course_rooster', $payload);
+// $reporting->savePayload('course_rooster', $payload);
 
 /**
  * Send the course payload to the API
@@ -193,7 +193,7 @@ foreach ($chats as $chat) {
     }
     $payload[] = $data;
 }
-$reporting->savePayload('messages_to_send', $payload);
+// $reporting->savePayload('messages_to_send', $payload);
 
 /**
  * Send the message payload to the API
@@ -244,7 +244,7 @@ $reporting->info('Retrieving new messages.');
 $reporting->info('Sending GET request to ' . $url . 'messages/' . $lastSync . '.');
 $response = $curl->makeRequest('messages/' . $lastSync, 'GET', [], null, true);
 $newMessages = json_decode($response);
-$reporting->savePayload('messages_received', $newMessages);
+//$reporting->savePayload('messages_received', $newMessages);
 $reporting->saveResult('total_messages_received', count($newMessages));
 if (count($newMessages) === 0) {
     $reporting->info('There are no new messages.');
@@ -307,7 +307,7 @@ $reporting->info('Checking if the API is missing attachments.');
 $reporting->info('Sending POST request to ' . $url . 'attachments/missing.');
 $response = $curl->makeRequest('attachments/missing', 'POST', [], null, true);
 $missing = json_decode($response);
-$reporting->savePayload('missing_attachments', $missing);
+//$reporting->savePayload('missing_attachments', $missing);
 $reporting->saveResult('total_missing_attachments_requested', count($missing));
 if ((!$response) || (count($missing) === 0)) {
     /**
