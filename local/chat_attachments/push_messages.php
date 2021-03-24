@@ -41,12 +41,14 @@ require_once(dirname(dirname(dirname(__FILE__))) . DIRECTORY_SEPARATOR . 'config
 require_once($CFG->libdir . DIRECTORY_SEPARATOR . 'filelib.php');
 require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Attachment.php');
 require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'CurlUtility.php');
+require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'FailedMessagesUtility.php');
 require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'FileStorageUtility.php');
 require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'ReportingUtility.php');
 // Uncomment if you want to disable emailing along with sending chat messages
 //$CFG->noemailever = true;
 
 $reporting = new ReportingUtility(dirname(__FILE__), $logToFile);
+$failedMessages = new FailedMessagesUtility(dirname(__FILE__));
 if (!$cliScript) {
     $reporting->printLineBreak = '<br>';
 }
@@ -80,6 +82,7 @@ $reporting->info('Sending GET request to ' . $url . 'messageStatus.');
 $lastSync = $curl->makeRequest('messageStatus', 'GET', []);
 $reporting->saveResult('last_time_synced', $lastSync);
 $reporting->saveResult('last_time_synced_pretty', date('F j, Y H:i:s', $lastSync));
+
 /**
  * Create the course payload to send to the API
  */
@@ -230,6 +233,7 @@ foreach ($attachments as $attachment) {
 $reporting->saveResult('total_attachments_sent', $reporting->getProgressSuccess());
 $reporting->saveResult('total_attachments_sent_failed', $reporting->getProgressError());
 $reporting->stopProgress();
+
 /**
  * Now request new messages from the API
  */
@@ -239,56 +243,63 @@ $response = $curl->makeRequest('messages/' . $lastSync, 'GET', [], null, true);
 $newMessages = json_decode($response);
 $reporting->savePayload('messages_received', $newMessages);
 $reporting->saveResult('total_messages_received', count($newMessages));
-if (count($newMessages) == 0) {
+if (count($newMessages) === 0) {
     $reporting->info('There are no new messages.');
-    $reporting->info('Script Complete!');
-    exit();
+} else {
+    $reporting->info('Total Messages Received: ' . number_format(count($newMessages)) . '.');
+
+    /**
+     * For each message, retrieve the attachment, save it to moodle, and save the new message.
+     */
+    $reporting->startProgress('Saving retrieved messages & attachments', count($newMessages));
+    foreach ($newMessages as $message) {
+        $content = $message->message;
+        if (Attachment::isAttachment($content)) {
+            $attachment = new Attachment($content);
+            /**
+             * Download and save the attachment
+             */
+            if ($attachment->id <= 0) {
+                // cannot get the attachment.  Move along.
+                $reporting->reportProgressError();
+                continue;
+            }
+
+            $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $attachment->filename;
+            $downloaded = $curl->downloadFile('attachments/' . $attachment->id, $tempPath);
+            if ($downloaded) {
+                $reporting->error('Unable to download attachment # ' . $attachment->id . '.', 'receive_message');
+                $reporting->reportProgressError();
+                $failedMessages->add(
+                    $message->_id,
+                    $message->sender->id,
+                    $message->conversation_id,
+                    $message->message
+                );
+                continue;
+            }
+            $reporting->info('Received attachment #' . $attachment->id . '.', 'receive_message');
+            $attachment->id = $storage->store($attachment->filename, $tempPath);
+            $content = $attachment->toString();
+        }
+        // Location in messages/classes/api.php
+        $message = \core_message\api::send_message_to_conversation(
+            $message->sender->id,
+            $message->conversation_id,
+            htmlspecialchars($content),
+            FORMAT_HTML
+        );
+        $DB->execute('UPDATE {messages} SET from_rocketchat = 1 WHERE id = ?', [$message->id]);
+        $reporting->reportProgressSuccess();
+    }
+    $reporting->saveResult('total_messages_received_completed', $reporting->getProgressSuccess());
+    $reporting->saveResult('total_messages_received_failed', $reporting->getProgressError());
+    $reporting->stopProgress();
 }
-$reporting->info('Total Messages Received: ' . number_format(count($newMessages)) . '.');
 
 /**
- * For each message, retrieve the attachment, save it to moodle, and save the new message.
+ * Ask the API if they are missing attachments and send them.
  */
-$reporting->startProgress('Saving retrieved messages & attachments', count($newMessages));
-foreach ($newMessages as $message) {
-    $content = $message->message;
-    $html = htmlspecialchars_decode($message->message);
-    if (Attachment::isAttachment($content)) {
-        $attachment = new Attachment($content);
-        /**
-         * Download and save the attachment
-         */
-        if ($attachment->id <= 0) {
-            // cannot get the attachment.  Move along.
-            $reporting->reportProgressError();
-            continue;
-        }
-
-        $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $attachment->filename;
-        $downloaded = $curl->downloadFile('attachments/' . $attachment->id, $tempPath);
-        if (!$downloaded) {
-            $reporting->error('Unable to download attachment # ' . $attachment->id . '.', 'receive_message');
-            $reporting->reportProgressError();
-            continue;
-        }
-        $reporting->info('Received attachment #' . $attachment->id . '.', 'receive_message');
-        $attachment->id = $storage->store($attachment->filename, $tempPath);
-        $content = $attachment->toString();
-    }
-    // Location in messages/classes/api.php
-    $message = \core_message\api::send_message_to_conversation(
-        $message->sender->id,
-        $message->conversation_id,
-        htmlspecialchars($content),
-        FORMAT_HTML
-    );
-    $DB->execute('UPDATE {messages} SET from_rocketchat = 1 WHERE id = ?', [$message->id]);
-    $reporting->reportProgressSuccess();
-}
-$reporting->saveResult('total_attachments_received', $reporting->getProgressSuccess());
-$reporting->saveResult('total_attachments_received_failed', $reporting->getProgressError());
-$reporting->stopProgress();
-
 $reporting->info('Checking if the API is missing attachments.');
 $reporting->info('Sending POST request to ' . $url . 'attachments/missing.');
 $response = $curl->makeRequest('attachments/missing', 'POST', [], null, true);
@@ -300,47 +311,94 @@ if ((!$response) || (count($missing) === 0)) {
      * Script finished
      */
     $reporting->info('There are no missing attachments.');
-    $reporting->info('Script Complete!');
-    exit();
+} else {
+    $reporting->startProgress('Uploading missing attachments', count($missing));
+    foreach ($missing as $id) {
+        $file = $storage->findById($id);
+        if (!$file) {
+            $reporting->error('Unable to find missing attachment with id: ' . $id . '.', 'missing_attachments');
+            $reporting->reportProgressError();
+            continue;
+        }
+        $filepath = $storage->retrieve($id, $file->filepath, $file->filename);
+        if ((!$filepath) || (!file_exists($filepath))) {
+            $reporting->error('Unable to move the attachment with id: ' . $id . '.', 'missing_attachments');
+            $reporting->reportProgressError();
+            continue;
+        }
+        $parts = explode('/', $file->mimetype);
+        $type = $parts[0];
+        if ($type === 'image') {
+            $type = 'photo';
+        }
+        $data = [
+            'type'      =>  $type,
+            'id'        =>  $id,
+            'filepath'  =>  $file->filepath,
+            'filename'  =>  $file->filename
+        ];
+        $response = $curl->makeRequest('attachments', 'POST', $data, $filepath);
+        if ($curl->responseCode === 200) {
+            $reporting->reportProgressSuccess();
+        } else {
+            $reporting->reportProgressError();
+        }
+        $reporting->info('Sent attachment #' . $id . ' with status ' . $curl->responseCode . '.', 'missing_attachments');
+    }
+    $reporting->saveResult('total_missing_attachments_sent', $reporting->getProgressSuccess());
+    $reporting->saveResult('total_missing_attachments_failed_sending', $reporting->getProgressError());
+    $reporting->stopProgress();
 }
-$sent = 0;
-$errored = 0;
-$reporting->startProgress('Uploading missing attachments', count($missing));
-foreach ($missing as $id) {
-    $file = $storage->findById($id);
-    if (!$file) {
-        $reporting->error('Unable to find missing attachment with id: ' . $id . '.', 'missing_attachments');
-        $reporting->reportProgressError();
-        continue;
-    }
-    $filepath = $storage->retrieve($id, $file->filepath, $file->filename);
-    if ((!$filepath) || (!file_exists($filepath))) {
-        $reporting->error('Unable to move the attachment with id: ' . $id . '.', 'missing_attachments');
-        $reporting->reportProgressError();
-        continue;
-    }
-    $parts = explode('/', $file->mimetype);
-    $type = $parts[0];
-    if ($type === 'image') {
-        $type = 'photo';
-    }
-    $data = [
-        'type'      =>  $type,
-        'id'        =>  $id,
-        'filepath'  =>  $file->filepath,
-        'filename'  =>  $file->filename
-    ];
-    $response = $curl->makeRequest('attachments', 'POST', $data, $filepath);
-    if ($curl->responseCode === 200) {
+
+/**
+ * Handle any missing attachments we have on file.
+ */
+$reporting->info('Checking if we have failed to receive any messages with attachments.');
+$missing = $failedMessages->all();
+if (count($missing) === 0) {
+    $reporting->info('No failed messages.');
+} else {
+    $reporting->startProgress('Retrying failed messages', count($missing));
+    foreach ($missing as $message) {
+        $content = $message['message'];
+        if (Attachment::isAttachment($content)) {
+            $attachment = new Attachment($content);
+            /**
+             * Download and save the attachment
+             */
+            if ($attachment->id <= 0) {
+                // cannot get the attachment.  Move along.
+                $reporting->reportProgressError();
+                continue;
+            }
+
+            $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $attachment->filename;
+            $downloaded = $curl->downloadFile('attachments/' . $attachment->id, $tempPath);
+            if (!$downloaded) {
+                $reporting->error('Unable to download attachment # ' . $attachment->id . '.', 'receive_message');
+                $reporting->reportProgressError();
+                continue;
+            }
+            $reporting->info('Received attachment #' . $attachment->id . '.', 'receive_message');
+            $attachment->id = $storage->store($attachment->filename, $tempPath);
+            $content = $attachment->toString();
+        }
+        // Location in messages/classes/api.php
+        $saved = \core_message\api::send_message_to_conversation(
+            $message['sender_id'],
+            $message['conversation_id'],
+            htmlspecialchars($content),
+            FORMAT_HTML
+        );
+        $DB->execute('UPDATE {messages} SET from_rocketchat = 1 WHERE id = ?', [$saved->id]);
         $reporting->reportProgressSuccess();
-    } else {
-        $reporting->reportProgressError();
+        $failedMessages->remove($message['id']);
     }
-    $reporting->info('Sent attachment #' . $id . ' with status ' . $curl->responseCode . '.', 'missing_attachments');
+    $reporting->stopProgress();
+    $missing = $failedMessages->all();
+    $reporting->saveResult('total_messages_received_failed', count($missing));
 }
-$reporting->saveResult('total_missing_attachments_sent', $reporting->getProgressSuccess());
-$reporting->saveResult('total_missing_attachments_failed_sending', $reporting->getProgressError());
-$reporting->stopProgress();
+
 /**
  * Script finished
  */
