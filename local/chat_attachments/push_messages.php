@@ -48,6 +48,7 @@ require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPA
 //$CFG->noemailever = true;
 
 $reporting = new ReportingUtility(dirname(__FILE__), $logToFile);
+$reporting->saveResult('status', 'started');
 $failedMessages = new FailedMessagesUtility(dirname(__FILE__));
 if (!$cliScript) {
     $reporting->printLineBreak = '<br>';
@@ -61,11 +62,13 @@ if (file_exists($machineIdFile)) {
 }
 if ((!$boxId) || ($boxId === '')) {
     $reporting->error('Unable to retrieve the Box ID.');
+    $reporting->saveResult('status', 'error');
     exit;
 }
 $reporting->saveResult('box_id', $boxId);
 if ($url === '') {
     $reporting->error('No URL provided!');
+    $reporting->saveResult('status', 'error');
     exit;
 }
 $reporting->info('Sending Requests to: ' . $url . '.');
@@ -403,3 +406,4 @@ if (count($missing) === 0) {
  * Script finished
  */
 $reporting->info('Script Complete!');
+$reporting->saveResult('status', 'completed');
