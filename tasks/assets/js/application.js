@@ -1,10 +1,26 @@
 /**
+ * Populate the logs panel.
+ *
+ * @param  {array} logs   An array of log data
+ * @return {void}
+ */
+function populateLogs(logs) {
+  console.log(logs);
+  $('#logs-output .card-body').html('');
+  $.each(logs, function(index, log) {
+    console.log(log);
+    var html = '<p><em>' + log.pretty_time + ':</em> ' + log.message + ' <span class="badge badge-pill badge-primary">' + log.category + '</span></p>';
+    $('#logs-output .card-body').append(html);
+  });
+}
+/**
  * Poll the server for more information about the sync script
  *
  * @return {void}
  */
 function pollServer() {
   $.get('/local/chat_attachments/report.json', function(data) {
+    populateLogs(data.logs);
     if (data.progress !== null) {
       $('#current-progress h5').text(data.progress.title);
       var completed = (data.progress.current + data.progress.error);
