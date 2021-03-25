@@ -139,7 +139,7 @@ class ReportingUtility
             'timestamp'     =>  time()
         ];
         $this->data['errors'][] = $error;
-        $this->generateSupportToken(false);
+        $this->generateSupportToken(false, false);
         if ($this->toFile) {
             $this->save();
         } else {
@@ -150,16 +150,24 @@ class ReportingUtility
     /**
      * Generates a random support token.  This protects from bombarding the support email.
      *
-     * @param   boolean $save   Do you want to save the report? (default: true)
+     * @param   boolean     $save       Do you want to save the report? (default: true)
+     * @param   boolean     $overwrite  Do you want to overwrite the current value? (default: true)
      * @return void
      * @access public
      */
-    public function generateSupportToken($save = true)
+    public function generateSupportToken($save = true, $overwrite = true)
     {
-        if (!$this->data['support_token']) {
+        if (!$this->toFile) {
+            // We don not have the data load it, so load it.
+            $this->data = $this->read(true);
+            if (!$this->data) {
+                return null;
+            }
+        }
+        if ((!$this->data['support_token']) || ($overwrite)) {
             $this->data['support_token'] = md5(uniqid(rand(), true));
         }
-        if ($this->toFile && $save) {
+        if ($save) {
             $this->save();
         }
     }
@@ -186,6 +194,22 @@ class ReportingUtility
         } else {
             $this->print('INFO', $item);
         }
+    }
+
+    /**
+     * Read the contents of the log file.
+     *
+     * @param   $toArray            Do you want the response as an array (default: false)
+     * @return  stdClass|array|null The JSON decoded
+     * @access  public
+     */
+    public function read($toArray = false)
+    {
+        $contents = file_get_contents($this->logFile);
+        if ((!isset($contents)) || ($contents === '')) {
+            return null;
+        }
+        return json_decode($contents, $toArray);
     }
 
     /**
@@ -425,8 +449,6 @@ class ReportingUtility
      */
     protected function save()
     {
-        if ($this->toFile) {
-            file_put_contents($this->logFile, json_encode($this->data));
-        }
+        file_put_contents($this->logFile, json_encode($this->data));
     }
 }
