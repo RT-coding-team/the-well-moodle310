@@ -1,4 +1,10 @@
 /**
+ * The given support token.
+ *
+ * @type {string}
+ */
+var token = '';
+/**
  * Get the step icon based on the status
  *
  * @param  {string} status The status (pending, started, errored, completed)
@@ -143,6 +149,13 @@ function pollServer() {
       $('button#sync').prop('disabled', false);
       $('button#sync i').removeClass('fa-spin');
     }
+    if (!data.support_token) {
+      token = '';
+      $('#report-problems').prop('disabled', true);
+    } else {
+      token = data.support_token;
+      $('#report-problems').prop('disabled', false);
+    }
     setTimeout(pollServer, 2000);
   }).fail(function() {
     setTimeout(pollServer, 2000);
@@ -155,6 +168,24 @@ $(function() {
       $('button#sync').prop('disabled', true);
       $('button#sync i').addClass('fa-spin');
       $.get('./sync.php').then(function() {});
+      return false;
+    });
+    $('#report-problems').on('click', function(event) {
+      event.stopPropagation();
+      if (token === '') {
+        $('#message-holder').html('<div class="alert alert-warning" role="alert">There are no problems to report.</div>');
+        $('html, body').animate({ scrollTop: 0 }, 'slow');
+        return false;
+      }
+      $.get('/local/chat_attachments/email_support.php?token=' + token).then(function(data) {
+        if (data.success) {
+          $('#message-holder').html('<div class="alert alert-primary" role="alert">Thank you! We reported the issue.</div>');
+        } else {
+          $('#message-holder').html('<div class="alert alert-warning" role="alert">Sorry, we were unable to report the problem. Please try again.</div>');
+          console.error(data.reason);
+        }
+        $('html, body').animate({ scrollTop: 0 }, 'slow');
+      });
       return false;
     });
     pollServer();
