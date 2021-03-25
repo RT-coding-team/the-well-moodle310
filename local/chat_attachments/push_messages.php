@@ -291,6 +291,8 @@ $reporting->saveResult('total_messages_received', count($newMessages));
 if (($curl->responseCode === 200) && (count($newMessages) === 0)) {
     $reporting->info('There are no new messages.', 'receiving_messages');
     $reporting->saveStep('receiving_messages', 'completed');
+    $reporting->saveResult('total_messages_received_completed', 0);
+    $reporting->saveResult('total_messages_received_failed', 0);
 } else if ($curl->responseCode === 200) {
     $reporting->info('Total Messages Received: ' . number_format(count($newMessages)) . '.', 'receiving_messages');
 
