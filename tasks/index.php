@@ -1,3 +1,21 @@
+<?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+require_once(dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'config.php');
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -6,14 +24,14 @@
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
     <link rel="stylesheet" href="assets/css/font-awesome.min.css">
     <link rel="stylesheet" href="assets/css/application.css">
-    <title>The Well: Online Tasks</title>
+    <title><?php echo get_string('tasks_page_title', 'local_chat_attachments'); ?></title>
   </head>
   <body>
     <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom box-shadow">
-      <h5 class="my-0 mr-md-auto font-weight-normal">The Well</h5>
+      <h5 class="my-0 mr-md-auto font-weight-normal"><?php echo get_string('brand', 'local_chat_attachments'); ?></h5>
     </div>
     <div class="container">
-      <h2>Online Tasks</h2>
+      <h2><?php echo get_string('tasks_title', 'local_chat_attachments'); ?></h2>
       <div id="message-holder"></div>
       <div id="current-progress" class="d-none">
         <h5></h5>
@@ -27,44 +45,44 @@
             <table class="statistics-table table table-sm">
               <thead>
                 <tr>
-                  <th colspan="2">Statistics</th>
+                  <th colspan="2"><?php echo get_string('tasks_label_statistics', 'local_chat_attachments'); ?></th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <th scope="row">Status</th>
+                  <th scope="row"><?php echo get_string('tasks_label_status', 'local_chat_attachments'); ?></th>
                   <td class="info-status text-capitalize"></td>
                 </tr>
                 <tr>
-                  <th scope="row">Box ID</th>
+                  <th scope="row"><?php echo get_string('tasks_label_box_id', 'local_chat_attachments'); ?></th>
                   <td class="info-box-id"></td>
                 </tr>
                 <tr>
-                  <th scope="row">Last Time Synced</th>
+                  <th scope="row"><?php echo get_string('tasks_label_last_time_synced', 'local_chat_attachments'); ?></th>
                   <td class="info-time-synced"></td>
                 </tr>
                 <tr>
-                  <th scope="row">Messages Sent</th>
+                  <th scope="row"><?php echo get_string('tasks_label_messages_sent', 'local_chat_attachments'); ?></th>
                   <td class="info-sent-messages"></td>
                 </tr>
                 <tr>
-                  <th scope="row">Attachments Sent</th>
+                  <th scope="row"><?php echo get_string('tasks_label_attachments_sent', 'local_chat_attachments'); ?></th>
                   <td class="info-sent-attachments"></td>
                 </tr>
                 <tr>
-                  <th scope="row">Attachments Failed to Send</th>
+                  <th scope="row"><?php echo get_string('tasks_label_attachments_sent_failed', 'local_chat_attachments'); ?></th>
                   <td class="info-sent-attachments-failed"></td>
                 </tr>
                 <tr>
-                  <th scope="row">Messages Received</th>
+                  <th scope="row"><?php echo get_string('tasks_label_messages_received', 'local_chat_attachments'); ?></th>
                   <td class="info-messages-received"></td>
                 </tr>
                 <tr>
-                  <th scope="row">Messages Failed to Receive</th>
+                  <th scope="row"><?php echo get_string('tasks_label_messages_received_failed', 'local_chat_attachments'); ?></th>
                   <td class="info-messages-received-failed"></td>
                 </tr>
                 <tr>
-                  <th scope="row">Missing Attachments</th>
+                  <th scope="row"><?php echo get_string('tasks_label_missing_attachments', 'local_chat_attachments'); ?></th>
                   <td class="info-missing-attachments"></td>
                 </tr>
               <tbody>
@@ -74,45 +92,45 @@
             <table class="steps-table table table-sm">
               <thead>
                 <tr>
-                  <th colspan="2">Steps</th>
+                  <th colspan="2"><?php echo get_string('tasks_label_steps', 'local_chat_attachments'); ?></th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td class="step-started"><i class="far fa-square"></i></td>
-                  <td>Started</td>
+                  <td><?php echo get_string('tasks_label_started', 'local_chat_attachments'); ?></td>
                 </tr>
                 <tr>
                   <td class="step-last-time-sync"><i class="far fa-square"></i></td>
-                  <td>Checking Last Time Synced</td>
+                  <td><?php echo get_string('tasks_label_check_last_sync', 'local_chat_attachments'); ?></td>
                 </tr>
                 <tr>
                   <td class="step-sending-roster"><i class="far fa-square"></i></td>
-                  <td>Sending Roster</td>
+                  <td><?php echo get_string('tasks_label_sending_roster', 'local_chat_attachments'); ?></td>
                 </tr>
                 <tr>
                   <td class="step-sending-messages"><i class="far fa-square"></i></td>
-                  <td>Sending Messages</td>
+                  <td><?php echo get_string('tasks_label_sending_messages', 'local_chat_attachments'); ?></td>
                 </tr>
                 <tr>
                   <td class="step-sending-attachments"><i class="far fa-square"></i></td>
-                  <td>Sending Attachments</td>
+                  <td><?php echo get_string('tasks_label_sending_attachments', 'local_chat_attachments'); ?></td>
                 </tr>
                 <tr>
                   <td class="step-receiving-messages"><i class="far fa-square"></i></td>
-                  <td>Receiving Messages</td>
+                  <td><?php echo get_string('tasks_label_receiving_messages', 'local_chat_attachments'); ?></td>
                 </tr>
                 <tr>
                   <td class="step-sending-missing"><i class="far fa-square"></i></td>
-                  <td>Sending Missing Attachments</td>
+                  <td><?php echo get_string('tasks_label_sending_missing_attachments', 'local_chat_attachments'); ?></td>
                 </tr>
                 <tr>
                   <td class="step-receiving-missing"><i class="far fa-square"></i></td>
-                  <td>Receiving Missing Attachments</td>
+                  <td><?php echo get_string('tasks_label_receiving_missing_attachments', 'local_chat_attachments'); ?></td>
                 </tr>
                 <tr>
                   <td class="step-finished"><i class="far fa-square"></i></td>
-                  <td>Completed</td>
+                  <td><?php echo get_string('tasks_label_completed', 'local_chat_attachments'); ?></td>
                 </tr>
               </tbody>
             </table>
@@ -124,7 +142,7 @@
           <div class="card-header" id="heading-logs">
             <h5 class="mb-0">
               <button class="btn btn-link" data-toggle="collapse" data-target="#logs-output" aria-expanded="true" aria-controls="logs-output">
-                Logs
+                <?php echo get_string('tasks_button_logs', 'local_chat_attachments'); ?>
               </button>
             </h5>
           </div>
@@ -138,7 +156,7 @@
           <div class="card-header" id="heading-error-logs">
             <h5 class="mb-0">
               <button class="btn btn-link" data-toggle="collapse" data-target="#error-logs-output" aria-expanded="true" aria-controls="error-logs-output">
-                Errors
+                <?php echo get_string('tasks_button_errors', 'local_chat_attachments'); ?>
               </button>
             </h5>
           </div>
@@ -151,14 +169,20 @@
       </div>
       <div class="row">
         <div class="col">
-          <button type="button" class="btn btn-primary btn-block" id="sync"><i class="fas fa-sync"></i> Sync</button>
+          <button type="button" class="btn btn-primary btn-block" id="sync"><i class="fas fa-sync"></i> <?php echo get_string('tasks_button_sync', 'local_chat_attachments'); ?></button>
         </div>
         <div class="col">
-          <button type="button" class="btn btn-secondary btn-block" id="report-problems" disabled="true"><i class="far fa-envelope"></i> Report Problems</button>
+          <button type="button" class="btn btn-secondary btn-block" id="report-problems" disabled="true"><i class="far fa-envelope"></i> <?php echo get_string('tasks_button_report_problems', 'local_chat_attachments'); ?></button>
         </div>
       </div>
     </div>
-
+    <script type="text/javascript">
+        var strings = {
+            tasks_message_no_problems: '<?php echo get_string('tasks_message_no_problems', 'local_chat_attachments'); ?>',
+            tasks_message_reporting_error: '<?php echo get_string('tasks_message_reporting_error', 'local_chat_attachments'); ?>',
+            tasks_message_reporting_success: '<?php echo get_string('tasks_message_reporting_success', 'local_chat_attachments'); ?>',
+        };
+    </script>
     <script src="assets/js/jquery-3.6.0.min.js"></script>
     <script src="assets/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/application.js"></script>
