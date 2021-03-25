@@ -16,7 +16,6 @@
 /**
  * Settings for this plugin.
  */
-
 defined('MOODLE_INTERNAL') || die();
 
 if ($hassiteconfig) {
@@ -35,6 +34,14 @@ if ($hassiteconfig) {
         new lang_string('manage', 'local_chat_attachments')
     );
     if ($ADMIN->fulltree) {
+        $page->add(
+            new admin_setting_configtext(
+                'local_chat_attachments/messaging_support_email',
+                new lang_string('messaging_support_email', 'local_chat_attachments'),
+                new lang_string('messaging_support_email_desc', 'local_chat_attachments'),
+                ''
+            )
+        );
         $page->add(
             new admin_setting_configtext(
                 'local_chat_attachments/messaging_url',
