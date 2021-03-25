@@ -173,6 +173,17 @@ class ReportingUtility
     }
 
     /**
+     * Get the path to the log file.
+     *
+     * @return string The path to the log file.
+     * @access public
+     */
+    public function getLogFilePath()
+    {
+        return $this->logFile;
+    }
+
+    /**
      * Report a message
      *
      * @param  string $message The message to log
