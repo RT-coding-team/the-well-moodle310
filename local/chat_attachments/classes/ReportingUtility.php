@@ -90,7 +90,7 @@ class ReportingUtility
      * Sets up the utility
      *
      * @param string    $directory  The directory to store the file. (default: basename(__DIR__))
-     * @param boolean   $toFile     Do you want to store the results to a file?
+     * @param boolean   $toFile     Do you want to store the results to a file? (default: true)
      *
      * @throws InvalidArgumentException If the directory does not exist
      */
@@ -106,6 +106,16 @@ class ReportingUtility
             );
         }
         $this->logFile = rtrim($directory, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $this->filename;
+    }
+
+    /**
+     * Clear and reset the file.
+     *
+     * @return void
+     * @access public
+     */
+    public function clear()
+    {
         if (file_exists($this->logFile)) {
             unlink($this->logFile);
         }

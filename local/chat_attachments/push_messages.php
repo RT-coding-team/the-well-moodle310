@@ -48,6 +48,9 @@ require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPA
 //$CFG->noemailever = true;
 
 $reporting = new ReportingUtility(dirname(__FILE__), $logToFile);
+if ($logToFile) {
+    $reporting->clear();
+}
 $reporting->saveResult('status', 'started');
 $reporting->saveStep('script', 'started');
 $failedMessages = new FailedMessagesUtility(dirname(__FILE__));
