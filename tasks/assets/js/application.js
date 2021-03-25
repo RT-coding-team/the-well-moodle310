@@ -163,30 +163,31 @@ function pollServer() {
 }
 
 $(function() {
-    $('button#sync').on('click', function(event) {
-      event.stopPropagation();
-      $('button#sync').prop('disabled', true);
-      $('button#sync i').addClass('fa-spin');
-      $.get('./sync.php').then(function() {});
+  $('button#sync').on('click', function(event) {
+    event.stopPropagation();
+    $('#message-holder').html('');
+    $('button#sync').prop('disabled', true);
+    $('button#sync i').addClass('fa-spin');
+    $.get('./sync.php').then(function() {});
+    return false;
+  });
+  $('#report-problems').on('click', function(event) {
+    event.stopPropagation();
+    if (token === '') {
+      $('#message-holder').html('<div class="alert alert-warning" role="alert">' + strings.tasks_message_no_problems + '</div>');
+      $('html, body').animate({ scrollTop: 0 }, 'slow');
       return false;
-    });
-    $('#report-problems').on('click', function(event) {
-      event.stopPropagation();
-      if (token === '') {
-        $('#message-holder').html('<div class="alert alert-warning" role="alert">There are no problems to report.</div>');
-        $('html, body').animate({ scrollTop: 0 }, 'slow');
-        return false;
+    }
+    $.get('/local/chat_attachments/email_support.php?token=' + token).then(function(data) {
+      if (data.success) {
+        $('#message-holder').html('<div class="alert alert-primary" role="alert">' + strings.tasks_message_reporting_success + '</div>');
+      } else {
+        $('#message-holder').html('<div class="alert alert-warning" role="alert">' + strings.tasks_message_reporting_error + '</div>');
+        console.error(data.reason);
       }
-      $.get('/local/chat_attachments/email_support.php?token=' + token).then(function(data) {
-        if (data.success) {
-          $('#message-holder').html('<div class="alert alert-primary" role="alert">Thank you! We reported the issue.</div>');
-        } else {
-          $('#message-holder').html('<div class="alert alert-warning" role="alert">Sorry, we were unable to report the problem. Please try again.</div>');
-          console.error(data.reason);
-        }
-        $('html, body').animate({ scrollTop: 0 }, 'slow');
-      });
-      return false;
+      $('html, body').animate({ scrollTop: 0 }, 'slow');
     });
-    pollServer();
+    return false;
+  });
+  pollServer();
 });
