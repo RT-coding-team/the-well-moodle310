@@ -1,4 +1,36 @@
 /**
+ * Get the step icon based on the status
+ *
+ * @param  {string} status The status (pending, started, errored, completed)
+ * @return {string}        The icon or an empty string
+ */
+function getStepIcon(status) {
+  if (status == 'pending') {
+    return '<i class="far fa-square"></i>';
+  } else if (status == 'started') {
+    return '<i class="fas fa-spinner fa-spin"></i>';
+  } else if (status == 'errored') {
+    return '<i class="fas fa-exclamation-triangle"></i>';
+  } else if (status == 'completed') {
+    return '<i class="far fa-check-square"></i>';
+  } else {
+    return '';
+  }
+}
+/**
+ * Populate the logs panel.
+ *
+ * @param  {array} logs   An array of log data
+ * @return {void}
+ */
+function populateLogs(logs) {
+  $('#logs-output .card-body').html('');
+  $.each(logs, function(index, log) {
+    var html = '<p><em>' + log.pretty_time + ':</em> ' + log.message + ' <span class="badge badge-pill badge-primary">' + log.category + '</span></p>';
+    $('#logs-output .card-body').append(html);
+  });
+}
+/**
  * Populate the stats fields
  *
  * @param  {object} stats The stats data
@@ -50,17 +82,22 @@ function populateStats(stats) {
   }
 }
 /**
- * Populate the logs panel.
+ * Populate the steps
  *
- * @param  {array} logs   An array of log data
+ * @param  {object} steps The steps progress
  * @return {void}
  */
-function populateLogs(logs) {
-  $('#logs-output .card-body').html('');
-  $.each(logs, function(index, log) {
-    var html = '<p><em>' + log.pretty_time + ':</em> ' + log.message + ' <span class="badge badge-pill badge-primary">' + log.category + '</span></p>';
-    $('#logs-output .card-body').append(html);
-  });
+function populateSteps(steps) {
+  var parent = $('#statistics .steps-table');
+  parent.find('.step-started').first().html(getStepIcon(steps.script));
+  parent.find('.step-last-time-sync').first().html(getStepIcon(steps.check_last_sync));
+  parent.find('.step-sending-roster').first().html(getStepIcon(steps.sending_roster));
+  parent.find('.step-sending-messages').first().html(getStepIcon(steps.sending_messages));
+  parent.find('.step-sending-attachments').first().html(getStepIcon(steps.sending_attachments));
+  parent.find('.step-receiving-messages').first().html(getStepIcon(steps.receiving_messages));
+  parent.find('.step-sending-missing').first().html(getStepIcon(steps.send_missing_attachments));
+  parent.find('.step-receiving-missing').first().html(getStepIcon(steps.receive_missing_attachments));
+  parent.find('.step-finished').first().html(getStepIcon(steps.script));
 }
 /**
  * Poll the server for more information about the sync script
@@ -71,6 +108,7 @@ function pollServer() {
   $.get('/local/chat_attachments/report.json', function(data) {
     populateLogs(data.logs);
     populateStats(data.results);
+    populateSteps(data.steps);
     if (data.progress !== null) {
       $('#current-progress h5').text(data.progress.title);
       var completed = (data.progress.current + data.progress.error);
