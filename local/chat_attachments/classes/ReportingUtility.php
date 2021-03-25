@@ -56,11 +56,13 @@ class ReportingUtility
     /**
      * The data that is written to the JSON file.
      *
-     * errors:      An array of errors that occurred
-     * logs:        An array of log messages
-     * payloads:    Data being sent to or received from the API (json encoded string)
-     * progress:    If we are current in a progress loop it will contain keys: current, total, and title.
-     * results:     An array of results for the task.
+     * errors:          An array of errors that occurred
+     * logs:            An array of log messages
+     * payloads:        Data being sent to or received from the API (json encoded string)
+     * progress:        If we are current in a progress loop it will contain keys: current, total, and title.
+     * results:         An array of results for the task.
+     * steps:           Describes the step and it's current status (pending, started, errored, or completed)
+     * support_token:   Set to a random token when an error is detected. Used to send support emails.
      *
      * @var array
      * @access protected
@@ -80,7 +82,8 @@ class ReportingUtility
             'receiving_messages'            =>  'pending',
             'send_missing_attachments'      =>  'pending',
             'receive_missing_attachments'   =>  'pending'
-        ]
+        ],
+        'support_token' =>  null
     ];
 
     /**
@@ -126,10 +129,28 @@ class ReportingUtility
             'timestamp'     =>  time()
         ];
         $this->data['errors'][] = $error;
+        $this->generateSupportToken(false);
         if ($this->toFile) {
             $this->save();
         } else {
             $this->print('ERROR', $error);
+        }
+    }
+
+    /**
+     * Generates a random support token.  This protects from bombarding the support email.
+     *
+     * @param   boolean $save   Do you want to save the report? (default: true)
+     * @return void
+     * @access public
+     */
+    public function generateSupportToken($save = true)
+    {
+        if (!$this->data['support_token']) {
+            $this->data['support_token'] = md5(uniqid(rand(), true));
+        }
+        if ($this->toFile && $save) {
+            $this->save();
         }
     }
 
