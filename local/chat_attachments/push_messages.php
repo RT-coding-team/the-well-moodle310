@@ -17,8 +17,6 @@
  * Sends messages to Rocketchat.
  *
  * If you want to use on command line, use `php push_messages.php true`
- *
- * @TODO Limit messages based on the provided Timestamp
  */
 $logToFile = true;
 $cliScript = false;
@@ -186,8 +184,8 @@ $query = 'SELECT m.id, m.conversationid, m.subject, m.fullmessagehtml, m.timecre
         's.username as sender_username, s.email as sender_email, r.id as recipient_id, r.username as recipient_username, ' .
         'r.email as recipient_email FROM {messages} AS m INNER JOIN {message_conversation_members} AS mcm ON m.conversationid=mcm.conversationid ' .
         'INNER JOIN {user} AS s ON mcm.userid = s.id INNER JOIN {user} AS r ON m.useridfrom = r.id ' .
-        'WHERE m.useridfrom <> mcm.userid AND m.from_rocketchat = 0 ORDER BY m.timecreated ASC';
-$chats = $DB->get_records_sql($query);
+        'WHERE m.useridfrom <> mcm.userid AND m.from_rocketchat = 0 AND  m.timecreated > ? ORDER BY m.timecreated ASC';
+$chats = $DB->get_records_sql($query, [$lastSync]);
 foreach ($chats as $chat) {
     $message = htmlspecialchars_decode($chat->fullmessagehtml);
     $attachment = null;
