@@ -18,6 +18,19 @@ function getStepIcon(status) {
   }
 }
 /**
+ * Populate the error logs panel.
+ *
+ * @param  {array} logs   An array of errorlog data
+ * @return {void}
+ */
+function populateErrors(logs) {
+  $('#error-logs-output .card-body').html('');
+  $.each(logs, function(index, log) {
+    var html = '<p><em>' + log.pretty_time + ':</em> ' + log.message + ' <span class="badge badge-pill badge-primary">' + log.category + '</span></p>';
+    $('#error-logs-output .card-body').append(html);
+  });
+}
+/**
  * Populate the logs panel.
  *
  * @param  {array} logs   An array of log data
@@ -107,6 +120,7 @@ function populateSteps(steps) {
 function pollServer() {
   $.get('/local/chat_attachments/report.json', function(data) {
     populateLogs(data.logs);
+    populateErrors(data.errors);
     populateStats(data.results);
     populateSteps(data.steps);
     if (data.progress !== null) {
@@ -129,6 +143,8 @@ function pollServer() {
       $('button#sync').prop('disabled', false);
       $('button#sync i').removeClass('fa-spin');
     }
+    setTimeout(pollServer, 2000);
+  }).fail(function() {
     setTimeout(pollServer, 2000);
   });
 }
