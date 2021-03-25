@@ -49,6 +49,7 @@ require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPA
 
 $reporting = new ReportingUtility(dirname(__FILE__), $logToFile);
 $reporting->saveResult('status', 'started');
+$reporting->saveStep('script', 'started');
 $failedMessages = new FailedMessagesUtility(dirname(__FILE__));
 if (!$cliScript) {
     $reporting->printLineBreak = '<br>';
@@ -61,18 +62,21 @@ if (file_exists($machineIdFile)) {
     $boxId = trim(file_get_contents($machineIdFile));
 }
 if ((!$boxId) || ($boxId === '')) {
-    $reporting->error('Unable to retrieve the Box ID.');
+    $reporting->error('Unable to retrieve the Box ID.', 'set_up');
     $reporting->saveResult('status', 'error');
+    $reporting->saveStep('script', 'errored');
     exit;
 }
 $reporting->saveResult('box_id', $boxId);
 if ($url === '') {
-    $reporting->error('No URL provided!');
+    $reporting->error('No URL provided!', 'set_up');
     $reporting->saveResult('status', 'error');
+    $reporting->saveStep('script', 'errored');
     exit;
 }
-$reporting->info('Sending Requests to: ' . $url . '.');
 
+$reporting->info('Sending Requests to: ' . $url . '.', 'check_last_sync');
+$reporting->saveStep('check_last_sync', 'started');
 $curl = new CurlUtility($url, $token, $boxId);
 $fs = get_file_storage();
 $systemContext = context_system::instance();
@@ -81,14 +85,24 @@ $storage = new FileStorageUtility($DB, $fs, $systemContext->id);
 /**
  * Retrieve the last time we synced
  */
-$reporting->info('Sending GET request to ' . $url . 'messageStatus.');
+$reporting->info('Sending GET request to ' . $url . 'messageStatus.', 'check_last_sync');
 $lastSync = $curl->makeRequest('messageStatus', 'GET', []);
+$logMessage = 'The response code for ' . $url . 'messageStatus was ' . $curl->responseCode . '.';
+if ($curl->responseCode !== 200) {
+    $reporting->error($logMessage, 'check_last_sync');
+    $reporting->saveStep('check_last_sync', 'errored');
+    $reporting->saveStep('script', 'errored');
+    exit;
+}
+$reporting->info($logMessage, 'check_last_sync');
 $reporting->saveResult('last_time_synced', $lastSync);
 $reporting->saveResult('last_time_synced_pretty', date('F j, Y H:i:s', $lastSync));
+$reporting->saveStep('check_last_sync', 'completed');
 
 /**
  * Create the course payload to send to the API
  */
+$reporting->saveStep('sending_roster', 'started');
 $payload = [];
 $courses = get_courses();
 $studentRole = $DB->get_record('role', ['shortname' =>  'student']);
@@ -148,13 +162,21 @@ foreach ($courses as $course) {
 /**
  * Send the course payload to the API
  */
-$reporting->info('Sending POST request to ' . $url . 'courseRosters.');
+$reporting->info('Sending POST request to ' . $url . 'courseRosters.', 'sending_roster');
 $curl->makeRequest('courseRosters', 'POST', json_encode($payload), null, true);
-$reporting->info('The response was ' . $curl->responseCode . '.');
+$logMessage = 'The response code for ' . $url . 'courseRosters was ' . $curl->responseCode . '.';
+if ($curl->responseCode === 200) {
+    $reporting->info($logMessage, 'sending_roster');
+    $reporting->saveStep('sending_roster', 'completed');
+} else {
+    $reporting->error($logMessage, 'sending_roster');
+    $reporting->saveStep('sending_roster', 'errored');
+}
 
 /**
  * Gather up the messages to send to the API
  */
+$reporting->saveStep('sending_messages', 'started');
 $payload = [];
 $attachments = [];
 $query = 'SELECT m.id, m.conversationid, m.subject, m.fullmessagehtml, m.timecreated, s.id as sender_id, ' .
@@ -198,20 +220,25 @@ foreach ($chats as $chat) {
 /**
  * Send the message payload to the API
  */
-$reporting->info('Sending POST request to ' . $url . 'messages.');
+$reporting->info('Sending POST request to ' . $url . 'messages.', 'sending_messages');
 $curl->makeRequest('messages', 'POST', json_encode($payload), null, true);
-$reporting->info('The response was ' . $curl->responseCode . '.');
+$logMessage = 'The response code for ' . $url . 'messages was ' . $curl->responseCode . '.';
 if ($curl->responseCode === 200) {
     $reporting->saveResult('total_messages_sent', count($chats));
+    $reporting->info($logMessage, 'sending_messages');
+    $reporting->saveStep('sending_messages', 'completed');
 } else {
     $reporting->saveResult('total_messages_sent', 0);
+    $reporting->error($logMessage, 'sending_messages');
+    $reporting->saveStep('sending_messages', 'errored');
 }
 
 /**
  * Send each attachment to the API
  *
  */
-$reporting->info('Sending attachments.');
+$reporting->info('Sending attachments.', 'sending_attachments');
+$reporting->saveStep('sending_attachments', 'started');
 $reporting->startProgress('Sending attachments', count($attachments));
 foreach ($attachments as $attachment) {
     $filepath = $storage->retrieve($attachment->id, $attachment->filepath, $attachment->filename);
@@ -235,21 +262,36 @@ foreach ($attachments as $attachment) {
 }
 $reporting->saveResult('total_attachments_sent', $reporting->getProgressSuccess());
 $reporting->saveResult('total_attachments_sent_failed', $reporting->getProgressError());
+if ($reporting->getProgressError() > 0) {
+    $reporting->saveStep('sending_attachments', 'errored');
+} else {
+    $reporting->saveStep('sending_attachments', 'completed');
+}
 $reporting->stopProgress();
 
 /**
  * Now request new messages from the API
  */
-$reporting->info('Retrieving new messages.');
-$reporting->info('Sending GET request to ' . $url . 'messages/' . $lastSync . '.');
+$reporting->saveStep('receiving_messages', 'started');
+$reporting->info('Retrieving new messages.', 'receiving_messages');
+$reporting->info('Sending GET request to ' . $url . 'messages/' . $lastSync . '.', 'receiving_messages');
 $response = $curl->makeRequest('messages/' . $lastSync, 'GET', [], null, true);
-$newMessages = json_decode($response);
+$logMessage = 'The response code for ' . $url . 'messages/' . $lastSync . ' was ' . $curl->responseCode . '.';
+if ($curl->responseCode === 200) {
+    $reporting->info($logMessage, 'receiving_messages');
+    $newMessages = json_decode($response);
+} else {
+    $reporting->error($logMessage, 'receiving_messages');
+    $reporting->saveStep('receiving_messages', 'errored');
+    $newMessages = [];
+}
 //$reporting->savePayload('messages_received', $newMessages);
 $reporting->saveResult('total_messages_received', count($newMessages));
-if (count($newMessages) === 0) {
-    $reporting->info('There are no new messages.');
-} else {
-    $reporting->info('Total Messages Received: ' . number_format(count($newMessages)) . '.');
+if (($curl->responseCode === 200) && (count($newMessages) === 0)) {
+    $reporting->info('There are no new messages.', 'receiving_messages');
+    $reporting->saveStep('receiving_messages', 'completed');
+} else if ($curl->responseCode === 200) {
+    $reporting->info('Total Messages Received: ' . number_format(count($newMessages)) . '.', 'receiving_messages');
 
     /**
      * For each message, retrieve the attachment, save it to moodle, and save the new message.
@@ -271,7 +313,7 @@ if (count($newMessages) === 0) {
             $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $attachment->filename;
             $downloaded = $curl->downloadFile('attachments/' . $attachment->id, $tempPath);
             if (!$downloaded) {
-                $reporting->error('Unable to download attachment # ' . $attachment->id . '.', 'receive_message');
+                $reporting->error('Unable to download attachment # ' . $attachment->id . '.', 'receiving_messages');
                 $reporting->reportProgressError();
                 $failedMessages->add(
                     $message->_id,
@@ -281,7 +323,7 @@ if (count($newMessages) === 0) {
                 );
                 continue;
             }
-            $reporting->info('Received attachment #' . $attachment->id . '.', 'receive_message');
+            $reporting->info('Received attachment #' . $attachment->id . '.', 'receiving_messages');
             $attachment->id = $storage->store($attachment->filename, $tempPath);
             $content = $attachment->toString();
         }
@@ -297,35 +339,54 @@ if (count($newMessages) === 0) {
     }
     $reporting->saveResult('total_messages_received_completed', $reporting->getProgressSuccess());
     $reporting->saveResult('total_messages_received_failed', $reporting->getProgressError());
+    if ($reporting->getProgressError() > 0) {
+        $reporting->saveStep('receiving_messages', 'errored');
+    } else {
+        $reporting->saveStep('receiving_messages', 'completed');
+    }
     $reporting->stopProgress();
 }
 
 /**
  * Ask the API if they are missing attachments and send them.
  */
-$reporting->info('Checking if the API is missing attachments.');
-$reporting->info('Sending POST request to ' . $url . 'attachments/missing.');
+$reporting->saveStep('send_missing_attachments', 'started');
+$reporting->info('Checking if the API is missing attachments.', 'send_missing_attachments');
+$reporting->info('Sending POST request to ' . $url . 'attachments/missing.', 'send_missing_attachments');
 $response = $curl->makeRequest('attachments/missing', 'POST', [], null, true);
-$missing = json_decode($response);
+$logMessage = 'The response code for ' . $url . 'attachments/missing was ' . $curl->responseCode . '.';
+if ($curl->responseCode === 200) {
+    $reporting->info($logMessage, 'send_missing_attachments');
+    $missing = json_decode($response);
+} else if ($curl->responseCode === 404) {
+    $reporting->info($logMessage, 'send_missing_attachments');
+    $missing = [];
+    $reporting->saveStep('send_missing_attachments', 'completed');
+} else {
+    $reporting->error($logMessage, 'send_missing_attachments');
+    $reporting->saveStep('send_missing_attachments', 'errored');
+    $missing = [];
+}
 //$reporting->savePayload('missing_attachments', $missing);
 $reporting->saveResult('total_missing_attachments_requested', count($missing));
-if ((!$response) || (count($missing) === 0)) {
+if (($curl->responseCode === 200) && ((!$response) || (count($missing) === 0))) {
     /**
      * Script finished
      */
-    $reporting->info('There are no missing attachments.');
-} else {
+    $reporting->info('There are no missing attachments.', 'send_missing_attachments');
+    $reporting->saveStep('send_missing_attachments', 'completed');
+} else if ($curl->responseCode === 200) {
     $reporting->startProgress('Uploading missing attachments', count($missing));
     foreach ($missing as $id) {
         $file = $storage->findById($id);
         if (!$file) {
-            $reporting->error('Unable to find missing attachment with id: ' . $id . '.', 'missing_attachments');
+            $reporting->error('Unable to find missing attachment with id: ' . $id . '.', 'send_missing_attachments');
             $reporting->reportProgressError();
             continue;
         }
         $filepath = $storage->retrieve($id, $file->filepath, $file->filename);
         if ((!$filepath) || (!file_exists($filepath))) {
-            $reporting->error('Unable to move the attachment with id: ' . $id . '.', 'missing_attachments');
+            $reporting->error('Unable to move the attachment with id: ' . $id . '.', 'send_missing_attachments');
             $reporting->reportProgressError();
             continue;
         }
@@ -346,20 +407,27 @@ if ((!$response) || (count($missing) === 0)) {
         } else {
             $reporting->reportProgressError();
         }
-        $reporting->info('Sent attachment #' . $id . ' with status ' . $curl->responseCode . '.', 'missing_attachments');
+        $reporting->info('Sent attachment #' . $id . ' with status ' . $curl->responseCode . '.', 'send_missing_attachments');
     }
     $reporting->saveResult('total_missing_attachments_sent', $reporting->getProgressSuccess());
     $reporting->saveResult('total_missing_attachments_failed_sending', $reporting->getProgressError());
+    if ($reporting->getProgressError() > 0) {
+        $reporting->saveStep('send_missing_attachments', 'errored');
+    } else {
+        $reporting->saveStep('send_missing_attachments', 'completed');
+    }
     $reporting->stopProgress();
 }
 
 /**
  * Handle any missing attachments we have on file.
  */
-$reporting->info('Checking if we have failed to receive any messages with attachments.');
+$reporting->saveStep('receive_missing_attachments', 'started');
+$reporting->info('Checking if we have failed to receive any messages with attachments.', 'receive_missing_attachments');
 $missing = $failedMessages->all();
 if (count($missing) === 0) {
-    $reporting->info('No failed messages.');
+    $reporting->info('No failed messages.', 'receive_missing_attachments');
+    $reporting->saveStep('receive_missing_attachments', 'completed');
 } else {
     $reporting->startProgress('Retrying failed messages', count($missing));
     foreach ($missing as $message) {
@@ -378,11 +446,11 @@ if (count($missing) === 0) {
             $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $attachment->filename;
             $downloaded = $curl->downloadFile('attachments/' . $attachment->id, $tempPath);
             if (!$downloaded) {
-                $reporting->error('Unable to download attachment # ' . $attachment->id . '.', 'receive_message');
+                $reporting->error('Unable to download attachment # ' . $attachment->id . '.', 'receive_missing_attachments');
                 $reporting->reportProgressError();
                 continue;
             }
-            $reporting->info('Received attachment #' . $attachment->id . '.', 'receive_message');
+            $reporting->info('Received attachment #' . $attachment->id . '.', 'receive_missing_attachments');
             $attachment->id = $storage->store($attachment->filename, $tempPath);
             $content = $attachment->toString();
         }
@@ -397,6 +465,11 @@ if (count($missing) === 0) {
         $reporting->reportProgressSuccess();
         $failedMessages->remove($message['id']);
     }
+    if ($reporting->getProgressError() > 0) {
+        $reporting->saveStep('receive_missing_attachments', 'errored');
+    } else {
+        $reporting->saveStep('receive_missing_attachments', 'completed');
+    }
     $reporting->stopProgress();
     $missing = $failedMessages->all();
     $reporting->saveResult('total_messages_received_failed', count($missing));
@@ -407,3 +480,4 @@ if (count($missing) === 0) {
  */
 $reporting->info('Script Complete!');
 $reporting->saveResult('status', 'completed');
+$reporting->saveStep('script', 'completed');

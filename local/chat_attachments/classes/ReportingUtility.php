@@ -70,7 +70,17 @@ class ReportingUtility
         'logs'      =>  [],
         'payloads'  =>  [],
         'progress'  =>  null,
-        'results'   =>  []
+        'results'   =>  [],
+        'steps'     =>  [
+            'script'                        =>  'pending',
+            'check_last_sync'               =>  'pending',
+            'sending_roster'                =>  'pending',
+            'sending_messages'              =>  'pending',
+            'sending_attachments'           =>  'pending',
+            'receiving_messages'            =>  'pending',
+            'send_missing_attachments'      =>  'pending',
+            'receive_missing_attachments'   =>  'pending'
+        ]
     ];
 
     /**
@@ -78,6 +88,8 @@ class ReportingUtility
      *
      * @param string    $directory  The directory to store the file. (default: basename(__DIR__))
      * @param boolean   $toFile     Do you want to store the results to a file?
+     *
+     * @throws InvalidArgumentException If the directory does not exist
      */
     public function __construct($directory = null, $toFile = true)
     {
@@ -195,6 +207,37 @@ class ReportingUtility
             $this->save();
         } else {
             $this->print('RESULT', $item);
+        }
+    }
+
+    /**
+     * Save a given step to the payload
+     *
+     * @param  string $step   The step to save. Must be a key of $this->data['steps'].
+     * @param  string $status The status of the step. Must be pending, started, errored, or completed.
+     * @return void
+     * @access public
+     *
+     * @throws InvalidArgumentException If the step is not a key of $this->data['steps']
+     * @throws InvalidArgumentException If the status is not pending, started, errored, or completed.
+     */
+    public function saveStep($step, $status)
+    {
+        if (!array_key_exists($step, $this->data['steps'])) {
+            throw new InvalidArgumentException('You must provide a valid step.');
+        }
+        if (!in_array($status, ['pending', 'started', 'errored', 'completed'])) {
+            throw new InvalidArgumentException(
+                'You must provide a valid status: pending, started, errored, or completed.'
+            );
+        }
+        $this->data['steps'][$step] = $status;
+        $prettyKey = ucwords(str_replace('_', ' ', $step));
+        // The internal method handles saving.
+        if ($status === 'errored') {
+            $this->error($prettyKey . ' set to ' . $status . '.', 'steps');
+        } else {
+            $this->info($prettyKey . ' set to ' . $status . '.', 'steps');
         }
     }
 
