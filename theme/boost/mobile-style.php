@@ -244,3 +244,7 @@ ion-app.app-root ion-select .select-icon .select-icon-inner {
 .picker-ios .picker-opt.picker-opt-selected {
     color: <?php echo $brandColor; ?> !important;
 }
+
+ion-app.app-root.md .button-md-light, ion-app.app-root.ios .button-ios-light {
+    color: #FFFFFF !important;
+}
