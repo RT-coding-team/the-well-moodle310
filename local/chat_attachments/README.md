@@ -54,3 +54,13 @@ this.http.post(url, params, headers).pipe(take(1)).subscribe(() => {
     "success": true
 }
 ```
+
+## Push Messages
+
+To push messages to the API, you have 3 options:
+
+1. Visit `${siteUrl}/tasks/` and use the provided GUI.
+2. Visit `${siteUrl}/local/chat_attachments/push_messages.php?logging=display`. (If you remove the logging param, it will log to the report.json file.)
+3. On terminal run the following command `/local/chat_attachments/push_messages.php true`. (If you add an additional true, it will log to the report.json file instead of stdout.)
+
+This script will handle all the message syncing.
