@@ -24,11 +24,11 @@ header("Content-type: text/css");
 .tabs-wp .tab-button .tab-button-icon,
 .tabs-wp .core-tabs-bar a.tab-slide .tab-button-icon,
 .core-tabs-bar .tabs-wp a.tab-slide .tab-button-icon {
-  color: #D8D8D8;
+  color: #B7B7B7;
 }
 .core-tabs-bar .slides a.tab-slide {
-  color: #D8D8D8 !important;
-  border-bottom-color: #D8D8D8 !important;
+  color: #B7B7B7 !important;
+  border-bottom-color: #B7B7B7 !important;
 }
 
 /* Bottom tabs selected color */
@@ -81,7 +81,7 @@ ion-app.app-root ion-select.core-button-select .select-icon .select-icon-inner, 
 
 .toggle-md .toggle-icon,
 .toggle-ios .toggle-icon {
-    background-color: #d8d8d8 !important;
+    background-color: #B7B7B7 !important;
 }
 
 .toggle-md .toggle-inner,
