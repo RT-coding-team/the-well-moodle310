@@ -484,3 +484,10 @@ if (count($missing) === 0) {
 $reporting->info('Script Complete!');
 $reporting->saveResult('status', 'completed');
 $reporting->saveStep('script', 'completed');
+
+/**
+ * Send the report to the API
+ */
+$logs = $reporting->read();
+$curl->makeRequest('logs', 'POST', json_encode($logs), null, true);
+echo $curl->responseCode;
