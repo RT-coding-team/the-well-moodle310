@@ -105,6 +105,7 @@ try {
 
 	// Added by Derek Maxson 20210413 -- allows a suffix to be added to the course name
 	if (isset($options['suffix'])) {
+		echo "Adding Suffix: $options['suffix']\n";
 		# Older versions of PHP don't have the function, so we will make one 
 		if (!function_exists('str_contains')) {
 			function str_contains($haystack, $needle) {
