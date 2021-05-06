@@ -32,7 +32,21 @@ if (!empty($_POST)) {
     if (!remote_file_exists($remoteFile)) {
         $error = get_string('form_error_url_missing', 'local_restore_by_url');
     }
+    set_time_limit(0);
     download_remote_archive($remoteFile, $destination);
+
+    if (file_exists($destination)) {
+        $scriptPath = $CFG->dirroot . DIRECTORY_SEPARATOR . 'admin' . DIRECTORY_SEPARATOR . 'cli' . DIRECTORY_SEPARATOR . 'restore_backup.php';
+        exec('php ' . $scriptPath . ' --categoryid=1 --file=' . $destination);
+        header('Location: ' . new moodle_url('/local/restore_by_url/restore.php?success=true'));
+        exit();
+    } else {
+        $error = get_string('form_error_unable_to_download', 'local_restore_by_url');
+    }
+}
+$success = '';
+if ((!empty($_GET)) && ($_GET['success'] === 'true')) {
+    $success = 'You course has been restored!';
 }
 
 echo $OUTPUT->header();
@@ -43,6 +57,9 @@ echo $OUTPUT->header();
         <?php
             if ($error !== '') {
                 echo '<p style="font-style: italic; color: red;">' . $error . '</p>';
+            }
+            if ($success !== '') {
+                echo '<p style="font-style: italic; color: blue;">' . $success . '</p>';
             }
         ?>
         <fieldset>
