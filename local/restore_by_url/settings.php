@@ -14,12 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 /**
- * Localization file
+ * Settings for this plugin.
  */
-$string['manage'] = 'Restore by URL';
-$string['pluginname'] = 'Restore by URL';
-$string['form_remote_url_field'] = 'URL';
-$string['form_remote_url_field_desc'] = 'The remote URL to the .mbz file.';
-$string['form_remote_url_submit'] = 'Restore';
-$string['form_error_no_url_provided'] = 'You are missing the URL!';
-$string['form_error_url_missing'] = 'The file at that location is missing!';
+defined('MOODLE_INTERNAL') || die();
+
+if ($hassiteconfig) {
+    /**
+     * Add a link to the course settings
+     */
+    $ADMIN->add(
+        'courses',
+        new admin_externalpage(
+            'local_restore_by_url_settings',
+            new lang_string('pluginname', 'local_restore_by_url'),
+            new moodle_url('/local/restore_by_url/restore.php')
+        )
+    );
+}

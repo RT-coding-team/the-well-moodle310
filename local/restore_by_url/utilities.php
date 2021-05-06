@@ -1,5 +1,5 @@
 <?php
-// This file is part of Moodle - https://moodle.org/
+// This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -14,12 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 /**
- * Localization file
+ * Various PHP utility functions.
  */
-$string['manage'] = 'Restore by URL';
-$string['pluginname'] = 'Restore by URL';
-$string['form_remote_url_field'] = 'URL';
-$string['form_remote_url_field_desc'] = 'The remote URL to the .mbz file.';
-$string['form_remote_url_submit'] = 'Restore';
-$string['form_error_no_url_provided'] = 'You are missing the URL!';
-$string['form_error_url_missing'] = 'The file at that location is missing!';
+/**
+ * Check whether the given URL exists.
+ *
+ * @param  string $url The URL
+ * @return boolean     yes|no
+ */
+function remote_file_exists($url) {
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_NOBODY, true);
+    curl_exec($ch);
+    $retcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    return ($retcode === 200);
+}
