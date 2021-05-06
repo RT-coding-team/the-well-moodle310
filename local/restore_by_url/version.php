@@ -25,8 +25,8 @@ $plugin->requires = 2010112400;
  * Our version number
  *
  */
-$plugin->version = 10000;
+$plugin->version = 10010;
 $plugin->component = 'local_restore_by_url';
 $plugin->cron = 0;
-$plugin->release = '1.0.0 (Build: 10000)';
+$plugin->release = '1.0.10 (Build: 10010)';
 $plugin->maturity = MATURITY_STABLE;

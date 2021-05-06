@@ -24,3 +24,4 @@ $string['form_remote_url_submit'] = 'Restore';
 $string['form_error_no_url_provided'] = 'You are missing the URL!';
 $string['form_error_url_missing'] = 'The file at that location is missing!';
 $string['form_error_unable_to_download'] = 'Sorry, we were unable to download the file.';
+$string['form_remote_url_restoring'] = 'Restoring...';

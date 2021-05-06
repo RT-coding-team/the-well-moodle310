@@ -32,16 +32,19 @@ if (!empty($_POST)) {
     if (!remote_file_exists($remoteFile)) {
         $error = get_string('form_error_url_missing', 'local_restore_by_url');
     }
-    set_time_limit(0);
-    download_remote_archive($remoteFile, $destination);
 
-    if (file_exists($destination)) {
-        $scriptPath = $CFG->dirroot . DIRECTORY_SEPARATOR . 'admin' . DIRECTORY_SEPARATOR . 'cli' . DIRECTORY_SEPARATOR . 'restore_backup.php';
-        exec('php ' . $scriptPath . ' --categoryid=1 --file=' . $destination);
-        header('Location: ' . new moodle_url('/local/restore_by_url/restore.php?success=true'));
-        exit();
-    } else {
-        $error = get_string('form_error_unable_to_download', 'local_restore_by_url');
+    if ($error === '') {
+        set_time_limit(0);
+        download_remote_archive($remoteFile, $destination);
+
+        if (file_exists($destination)) {
+            $scriptPath = $CFG->dirroot . DIRECTORY_SEPARATOR . 'admin' . DIRECTORY_SEPARATOR . 'cli' . DIRECTORY_SEPARATOR . 'restore_backup.php';
+            exec('php ' . $scriptPath . ' --categoryid=1 --file=' . $destination);
+            header('Location: ' . new moodle_url('/local/restore_by_url/restore.php?success=true'));
+            exit();
+        } else {
+            $error = get_string('form_error_unable_to_download', 'local_restore_by_url');
+        }
     }
 }
 $success = '';
@@ -54,14 +57,16 @@ echo $OUTPUT->header();
 <form id="resture-by-url-form" action="<?php echo new moodle_url('/local/restore_by_url/restore.php'); ?>" method="post">
     <div class="settingsform">
         <h2><?php echo get_string('pluginname', 'local_restore_by_url'); ?></h2>
-        <?php
-            if ($error !== '') {
-                echo '<p style="font-style: italic; color: red;">' . $error . '</p>';
-            }
-            if ($success !== '') {
-                echo '<p style="font-style: italic; color: blue;">' . $success . '</p>';
-            }
-        ?>
+        <div id="message-holder">
+            <?php
+                if ($error !== '') {
+                    echo '<p style="font-style: italic; color: red;">' . $error . '</p>';
+                }
+                if ($success !== '') {
+                    echo '<p style="font-style: italic; color: blue;">' . $success . '</p>';
+                }
+            ?>
+        </div>
         <fieldset>
             <div class="clearer"></div>
             <div id="admin-form_remote_url_field" class="form-item row">
@@ -80,7 +85,9 @@ echo $OUTPUT->header();
         </fieldset>
         <div class="row">
             <div class="offset-sm-3 col-sm-3">
-                <button type="submit" class="btn btn-primary"><?php echo get_string('form_remote_url_submit', 'local_restore_by_url'); ?></button>
+                <button type="submit" class="btn btn-primary" onClick="this.disabled=true; this.innerText='<?php echo get_string('form_remote_url_restoring', 'local_restore_by_url'); ?>';">
+                    <?php echo get_string('form_remote_url_submit', 'local_restore_by_url'); ?>
+                </button>
             </div>
         </div>
     </div>
