@@ -30,3 +30,13 @@ function remote_file_exists($url) {
     curl_close($ch);
     return ($retcode === 200);
 }
+/**
+ * Download the remote archive locally.
+ *
+ * @param  string $src  The source file
+ * @param  string $dest The destination file
+ * @return void
+ */
+function download_remote_archive($src, $dest) {
+    file_put_contents($dest, file_get_contents($src));
+}
