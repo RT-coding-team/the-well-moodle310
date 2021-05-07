@@ -64,3 +64,17 @@ To push messages to the API, you have 3 options:
 3. On terminal run the following command `/local/chat_attachments/push_messages.php true`. (If you add an additional true, it will log to the report.json file instead of stdout.)
 
 This script will handle all the message syncing.
+
+## Command Line Scripts
+
+We also provide a few command line scripts for managing the chat attachments.
+
+### Compress Attachments
+
+This script requires [FFmpeg](https://www.ffmpeg.org/) to be installed on your server.  It will compress the attachment in order to reduce the required server space. Use the following command to run the script:
+
+```
+php compress_attachment.php <ITEMID>
+```
+
+The ITEMID is the itemid that identifies which attachment to compress.
