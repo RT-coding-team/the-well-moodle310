@@ -78,3 +78,13 @@ php compress_attachment.php <ITEMID>
 ```
 
 The ITEMID is the itemid that identifies which attachment to compress.
+
+### Push Messages
+
+It is better to use the visual tool listed above, but you can also use the CLI.  Simply run the following command:
+
+```
+php push_messages.php true <boolean:LOG_TO_FILE>
+```
+
+The first true arguments tells the script that you are using the command line.  The second boolean indicates if you want to log to the JSON file (true) or to the terminal (false).
