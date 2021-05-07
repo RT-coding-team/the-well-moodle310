@@ -52,8 +52,13 @@ if (substr($file->mimetype, 0, 5) === 'video') {
      */
     exec('ffmpeg -i ' . $tempFile . ' -c:v libx264 -crf 28 -profile:v baseline -level 3.0 -pix_fmt yuv420p -c:a aac -ac 2 -b:a 128k -movflags faststart -y ' . $optFile);
     /**
-     * Replace the old file
+     * If the optimized file exists, and ffmpeg did not choke (0 byte file), replace the old file
      */
-    $storage->update($file->itemid, $file->filename, $optFile);
+    if ((file_exists($optFile)) && (filesize($optFile) > 0)) {
+        $storage->update($file->itemid, $file->filename, $optFile);
+    } else{
+        echo 'Unable to convert the file!';
+        exit;
+    }
 }
 echo "The file compression is complete.\r\n";
