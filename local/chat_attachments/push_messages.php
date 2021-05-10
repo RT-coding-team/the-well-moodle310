@@ -260,6 +260,7 @@ foreach ($attachments as $attachment) {
         $reporting->info('Attachment #' . $attachment->id . ' previously sent.', 'send_attachments');
         $reporting->reportProgressSuccess();
     }
+    unlink($filepath);
 }
 $reporting->saveResult('total_attachments_sent', $reporting->getProgressSuccess());
 $reporting->saveResult('total_attachments_sent_failed', $reporting->getProgressError());
@@ -329,6 +330,7 @@ if (($curl->responseCode === 200) && (count($newMessages) === 0)) {
             $reporting->info('Received attachment #' . $attachment->id . '.', 'receiving_messages');
             $attachment->id = $storage->store($attachment->filename, $tempPath);
             $content = $attachment->toString();
+            unlink($tempPath);
         }
         // Location in messages/classes/api.php
         $message = \core_message\api::send_message_to_conversation(
@@ -411,6 +413,7 @@ if (($curl->responseCode === 200) && ((!$response) || (count($missing) === 0))) 
             $reporting->reportProgressError();
         }
         $reporting->info('Sent attachment #' . $id . ' with status ' . $curl->responseCode . '.', 'send_missing_attachments');
+        unlink($filepath);
     }
     $reporting->saveResult('total_missing_attachments_sent', $reporting->getProgressSuccess());
     $reporting->saveResult('total_missing_attachments_failed_sending', $reporting->getProgressError());
@@ -456,6 +459,7 @@ if (count($missing) === 0) {
             $reporting->info('Received attachment #' . $attachment->id . '.', 'receive_missing_attachments');
             $attachment->id = $storage->store($attachment->filename, $tempPath);
             $content = $attachment->toString();
+            unlink($tempPath);
         }
         // Location in messages/classes/api.php
         $saved = \core_message\api::send_message_to_conversation(
