@@ -73,6 +73,28 @@ class FileStorageUtility
     }
 
     /**
+     * Delete the given file.
+     *
+     * @param  integer $id  The id of the file to delete
+     * @return void
+     */
+    public function delete($id)
+    {
+        $details = $this->findById($id);
+        $file = $this->storage->get_file(
+            $this->contextId,
+            $this->component,
+            $this->fileArea,
+            $id,
+            $details->filepath,
+            $details->filename
+        );
+        if ($file) {
+            $file->delete();
+        }
+    }
+
+    /**
      * Find the file by the given id
      *
      * @param  integer  $id     The id of the given file
@@ -143,6 +165,28 @@ class FileStorageUtility
         ];
         $file = $this->storage->create_file_from_pathname($record, $tempFile);
         return $id;
+    }
+
+    /**
+     * Update the current file.
+     *
+     * @param  integer  $id         The id of the file
+     * @param  string   $filename   The filename
+     * @param  string   $tempFile   The path to the temp file
+     * @return void
+     */
+    public function update($id, $filename, $tempFile)
+    {
+        $this->delete($id);
+        $record = [
+            'contextid' =>  $this->contextId,
+            'component' =>  $this->component,
+            'filearea'  =>  $this->fileArea,
+            'itemid'    =>  $id,
+            'filepath'  =>  '/',
+            'filename'  =>  $filename
+        ];
+        $file = $this->storage->create_file_from_pathname($record, $tempFile);
     }
 
     /**

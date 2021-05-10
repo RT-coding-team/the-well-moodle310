@@ -72,6 +72,10 @@ function local_chat_attachments_pluginfile(
         if (!$file) {
             return false;
         }
+        /**
+         * Fire off the compression script.
+         */
+        exec('php ' . dirname(__FILE__) . DIRECTORY_SEPARATOR . 'compress_attachment.php ' . $itemId . ' > /dev/null 2>&1 &');
     }
     send_stored_file($file, 86400, 0, $forcedownload, $options);
 }
