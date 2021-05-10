@@ -60,7 +60,7 @@ class FailedMessagesUtility
             );
         }
         $this->storageFile = rtrim($directory, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $this->filename;
-        if (file_exists($this->logFile)) {
+        if (file_exists($this->storageFile)) {
             $contents = file_get_contents($this->storageFile);
             if ($contents) {
                 $this->messages = json_decode($contents, true);
