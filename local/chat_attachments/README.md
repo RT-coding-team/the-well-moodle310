@@ -69,6 +69,14 @@ This script will handle all the message syncing.
 
 We also provide a few command line scripts for managing the chat attachments.
 
+### Clean Up Attachments
+
+This script will remove files from messages older than the provided number of days, and replace it with a missing symbol.
+
+```
+php clean_up.php <NUMBER_OF_DAYS>
+```
+
 ### Compress Attachments
 
 This script requires [FFmpeg](https://www.ffmpeg.org/) to be installed on your server.  It will compress the attachment in order to reduce the required server space. Use the following command to run the script:
