@@ -56,7 +56,12 @@ if (substr($file->mimetype, 0, 5) === 'video') {
      */
     if ((file_exists($optFile)) && (filesize($optFile) > 0)) {
         $storage->update($file->itemid, $file->filename, $optFile);
+        unlink($optFile);
+        unlink($tempFile);
     } else{
+        if (file_exists($tempFile)) {
+            unlink($tempFile);
+        }
         echo 'Unable to convert the file!';
         exit;
     }
