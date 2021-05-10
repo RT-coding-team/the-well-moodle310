@@ -28,6 +28,13 @@ $unavailableMessage = '<i class="fa fa-exclamation-triangle" style="font-size: 6
 if ((isset($argv)) && (isset($argv[1]))) {
     $numOfDays = intval($argv[1]);
 }
+if ($numOfDays <= 1) {
+    echo "Please pick a number of days greater than 1.\r\n";
+    exit;
+}
+
+echo "Cleaning up files older than " . $numOfDays . " days old.\r\n";
+
 $threshold = time() - ($numOfDays * (24 * (60 * 60)));
 $fs = get_file_storage();
 $systemContext = context_system::instance();
