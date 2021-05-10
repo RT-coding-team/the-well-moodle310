@@ -95,6 +95,11 @@ if ($method === 'add_file') {
          []
      );
 
+     /**
+      * Fire off the compression script.
+      */
+     exec('php ' . dirname(__FILE__) . DIRECTORY_SEPARATOR . 'compress_attachment.php ' . $itemId . ' > /dev/null 2>&1 &');
+
      http_response_code(200);
      header('Content-type: application/json');
      echo json_encode(['success' =>  true]);
