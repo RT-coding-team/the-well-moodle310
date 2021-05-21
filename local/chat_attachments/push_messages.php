@@ -231,7 +231,7 @@ foreach ($attachments as $attachment) {
         continue;
     }
     //Check if file exists.  If returns 404, then send file
-    $curl->makeRequest('attachments/exists/' . $attachment->id , 'GET', []);
+    $curl->makeRequest('attachments/' . $attachment->id . '/exists', 'GET', []);
     if ($curl->responseCode === 404) {
         $response = $curl->makeRequest('attachments', 'POST', $attachment->toArray(), $filepath);
         if ($curl->responseCode === 200) {
