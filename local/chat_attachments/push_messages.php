@@ -403,6 +403,7 @@ if (($curl->responseCode === 200) && ((!$response) || (count($missing) === 0))) 
         $data = [
             'type'      =>  $type,
             'id'        =>  $id,
+            'mimetype'  =>  $file->mimetype,
             'filepath'  =>  $file->filepath,
             'filename'  =>  $file->filename
         ];
