@@ -219,22 +219,6 @@ foreach ($chats as $chat) {
 // $reporting->savePayload('messages_to_send', $payload);
 
 /**
- * Send the message payload to the API
- */
-$reporting->info('Sending POST request to ' . $url . 'messages.', 'sending_messages');
-$curl->makeRequest('messages', 'POST', json_encode($payload), null, true);
-$logMessage = 'The response code for ' . $url . 'messages was ' . $curl->responseCode . '.';
-if ($curl->responseCode === 200) {
-    $reporting->saveResult('total_messages_sent', count($chats));
-    $reporting->info($logMessage, 'sending_messages');
-    $reporting->saveStep('sending_messages', 'completed');
-} else {
-    $reporting->saveResult('total_messages_sent', 0);
-    $reporting->error($logMessage, 'sending_messages');
-    $reporting->saveStep('sending_messages', 'errored');
-}
-
-/**
  * Send each attachment to the API
  *
  */
@@ -270,6 +254,22 @@ if ($reporting->getProgressError() > 0) {
     $reporting->saveStep('sending_attachments', 'completed');
 }
 $reporting->stopProgress();
+
+/**
+ * Send the message payload to the API
+ */
+$reporting->info('Sending POST request to ' . $url . 'messages.', 'sending_messages');
+$curl->makeRequest('messages', 'POST', json_encode($payload), null, true);
+$logMessage = 'The response code for ' . $url . 'messages was ' . $curl->responseCode . '.';
+if ($curl->responseCode === 200) {
+    $reporting->saveResult('total_messages_sent', count($chats));
+    $reporting->info($logMessage, 'sending_messages');
+    $reporting->saveStep('sending_messages', 'completed');
+} else {
+    $reporting->saveResult('total_messages_sent', 0);
+    $reporting->error($logMessage, 'sending_messages');
+    $reporting->saveStep('sending_messages', 'errored');
+}
 
 /**
  * Now request new messages from the API
