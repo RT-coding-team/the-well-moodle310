@@ -303,6 +303,30 @@ if (($curl->responseCode === 200) && (count($newMessages) === 0)) {
     $reporting->startProgress('Saving retrieved messages & attachments', count($newMessages));
     foreach ($newMessages as $message) {
         $content = $message->message;
+// Take Usernames and Convert To UserIDs and ConversationIDs -- DM 20210524
+		// Match usernames to userids
+		$query = 'SELECT 0 as id,sender.id as senderId, sender.username as senderUsername, recipient.id as recipientId, recipient.username as recipientUsername
+		 	FROM {user} sender CROSS JOIN {user} recipient
+		 	where sender.username = ? AND recipient.username=?';
+		$userinfo = $DB->get_records_sql($query, [$message->sender->username,$message->recipient->username]);
+		$message->sender->id = $userinfo[0]->senderid;
+		$message->recipient->id = $userinfo[0]->recipientid;
+
+		// Now get the conversationid.  If exists, this function returns the existing conversation.  Never duplicates them!
+		$conversation = \core_message\api::create_conversation(
+			\core_message\api::MESSAGE_CONVERSATION_TYPE_INDIVIDUAL,
+			[
+				$message->sender->id,
+				$message->recipient->id
+			]
+		);  
+		if ($conversation->id > 0) {
+			$message->conversation_id = $conversation->id;
+		}
+		else {
+			die();
+		}
+// End modifications 
         if (Attachment::isAttachment($content)) {
             $attachment = new Attachment($content);
             /**
