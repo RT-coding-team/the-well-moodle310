@@ -180,7 +180,7 @@ if ($curl->responseCode === 200) {
 $reporting->saveStep('sending_messages', 'started');
 $payload = [];
 $attachments = [];
-$query = 'SELECT m.id, m.conversationid, m.subject, m.fullmessagehtml, m.timecreated, s.id as sender_id, ' .
+$query = 'SELECT m.id, m.conversationid, m.subject, m.fullmessage, m.fullmessagehtml, m.timecreated, s.id as sender_id, ' .
         's.username as sender_username, s.email as sender_email, r.id as recipient_id, r.username as recipient_username, ' .
         'r.email as recipient_email FROM {messages} AS m INNER JOIN {message_conversation_members} AS mcm ON m.conversationid=mcm.conversationid ' .
         'INNER JOIN {user} AS s ON mcm.userid = s.id INNER JOIN {user} AS r ON m.useridfrom = r.id ' .
@@ -188,6 +188,7 @@ $query = 'SELECT m.id, m.conversationid, m.subject, m.fullmessagehtml, m.timecre
 $chats = $DB->get_records_sql($query, [$lastSync]);
 foreach ($chats as $chat) {
     $message = htmlspecialchars_decode($chat->fullmessagehtml);
+    if (strlen($message) == 0) { $message = $chat->fullmessage; }  // Added by DM 20210524 to catch messages that display as fullmessage
     $attachment = null;
     if (Attachment::isAttachment($message)) {
         $attachment = new Attachment($message);
