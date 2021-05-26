@@ -76,6 +76,20 @@ if ($url === '') {
     exit;
 }
 
+// Check for active Internet connection to the world
+$output = shell_exec('curl -m 10 -sL -w "%{http_code}\\n" "' . $url . '/chathost/healthcheck" -o /dev/null');
+$output = substr($output, 0, -1);
+if ($output != '200') {
+	$reporting->info('Chathost: ' . $url . ' is unavailable. Not able to sync. HTTP Code:', $output);
+	$reporting->info('Script Exiting!');
+	$reporting->saveResult('status', 'completed');
+	$reporting->saveStep('script', 'completed');
+	die();
+}
+else {
+	$reporting->info('Chathost: ' . $url . ' is connected. HTTP Code:', $output);
+}
+
 $reporting->info('Sending Requests to: ' . $url . '.', 'check_last_sync');
 $reporting->saveStep('check_last_sync', 'started');
 $curl = new CurlUtility($url, $token, $boxId);
