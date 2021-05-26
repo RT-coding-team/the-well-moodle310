@@ -355,7 +355,6 @@ if (($curl->responseCode === 200) && (count($newMessages) === 0)) {
 
             $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $attachment->filename;
 			$downloaded = $curl->downloadFile($attachment->filepath, $tempPath);
-echo json_encode($downloaded, JSON_PRETTY_PRINT);
             if (!$downloaded) {
                 $reporting->error('Unable to download attachment ' . $attachment->filename . '.', 'receiving_messages');
                 $reporting->reportProgressError();
@@ -367,13 +366,11 @@ echo json_encode($downloaded, JSON_PRETTY_PRINT);
                 );
                 continue;
             }
-echo json_encode($attachment, JSON_PRETTY_PRINT);
             $reporting->info('Received attachment #' . $attachment->filename . '.', 'receiving_messages');
             $attachment->id = $storage->store($attachment->filename, $tempPath);
 			$attachment->filepath = '/';
             $content = $attachment->toString();
             unlink($tempPath);
-echo json_encode($attachment, JSON_PRETTY_PRINT);
         }
         // Location in messages/classes/api.php
         $message = \core_message\api::send_message_to_conversation(
