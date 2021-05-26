@@ -57,11 +57,9 @@ if (!$cliScript) {
 }
 $url = get_config('local_chat_attachments', 'messaging_url');
 $token = get_config('local_chat_attachments', 'messaging_token');
-$machineIdFile = DIRECTORY_SEPARATOR . 'etc' . DIRECTORY_SEPARATOR . 'machine-id';
-$boxId = null;
-if (file_exists($machineIdFile)) {
-    $boxId = trim(file_get_contents($machineIdFile));
-}
+$output = shell_exec("cat /sys/class/net/eth0/address | tr ':' '-'");
+$boxId = substr($output, 0, -1);
+
 if ((!$boxId) || ($boxId === '')) {
     $reporting->error('Unable to retrieve the Box ID.', 'set_up');
     $reporting->saveResult('status', 'error');
