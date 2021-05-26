@@ -396,63 +396,6 @@ echo json_encode($attachment, JSON_PRETTY_PRINT);
 }
 
 /**
- * Handle any missing attachments we have on file.
- */
-$reporting->saveStep('receive_missing_attachments', 'started');
-$reporting->info('Checking if we have failed to receive any messages with attachments.', 'receive_missing_attachments');
-$missing = $failedMessages->all();
-if (count($missing) === 0) {
-    $reporting->info('No failed messages.', 'receive_missing_attachments');
-    $reporting->saveStep('receive_missing_attachments', 'completed');
-} else {
-    $reporting->startProgress('Retrying failed messages', count($missing));
-    foreach ($missing as $message) {
-        $content = $message['message'];
-        if (Attachment::isAttachment($content)) {
-            $attachment = new Attachment($content);
-            /**
-             * Download and save the attachment
-             */
-            if ($attachment->id <= 0) {
-                // cannot get the attachment.  Move along.
-                $reporting->reportProgressError();
-                continue;
-            }
-
-            $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $attachment->filename;
-            $downloaded = $curl->downloadFile('attachments/' . $attachment->id, $tempPath);
-            if (!$downloaded) {
-                $reporting->error('Unable to download attachment # ' . $attachment->id . '.', 'receive_missing_attachments');
-                $reporting->reportProgressError();
-                continue;
-            }
-            $reporting->info('Received attachment #' . $attachment->id . '.', 'receive_missing_attachments');
-            $attachment->id = $storage->store($attachment->filename, $tempPath);
-            $content = $attachment->toString();
-            unlink($tempPath);
-        }
-        // Location in messages/classes/api.php
-        $saved = \core_message\api::send_message_to_conversation(
-            $message['sender_id'],
-            $message['conversation_id'],
-            htmlspecialchars($content),
-            FORMAT_HTML
-        );
-        $DB->execute('UPDATE {messages} SET from_rocketchat = 1 WHERE id = ?', [$saved->id]);
-        $reporting->reportProgressSuccess();
-        $failedMessages->remove($message['id']);
-    }
-    if ($reporting->getProgressError() > 0) {
-        $reporting->saveStep('receive_missing_attachments', 'errored');
-    } else {
-        $reporting->saveStep('receive_missing_attachments', 'completed');
-    }
-    $reporting->stopProgress();
-    $missing = $failedMessages->all();
-    $reporting->saveResult('total_messages_received_failed', count($missing));
-}
-
-/**
  * Script finished
  */
 $reporting->info('Script Complete!');
