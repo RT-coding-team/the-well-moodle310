@@ -87,8 +87,8 @@ $storage = new FileStorageUtility($DB, $fs, $systemContext->id);
  * Retrieve the last time we synced
  */
 $reporting->info('Sending GET request to ' . $url . 'messageStatus.', 'check_last_sync');
-$lastSync = $curl->makeRequest('messageStatus', 'GET', []);
-$logMessage = 'The response code for ' . $url . 'messageStatus was ' . $curl->responseCode . '.';
+$lastSync = $curl->makeRequest('/chathost/messageStatus', 'GET', []);
+$logMessage = 'The response code for ' . $url . '/chathost/messageStatus was ' . $curl->responseCode . '.';
 if ($curl->responseCode !== 200) {
     $reporting->error($logMessage, 'check_last_sync');
     $reporting->saveStep('check_last_sync', 'errored');
@@ -164,8 +164,8 @@ foreach ($courses as $course) {
  * Send the course payload to the API
  */
 $reporting->info('Sending POST request to ' . $url . 'courseRosters.', 'sending_roster');
-$curl->makeRequest('courseRosters', 'POST', json_encode($payload), null, true);
-$logMessage = 'The response code for ' . $url . 'courseRosters was ' . $curl->responseCode . '.';
+$curl->makeRequest('/chathost/courseRosters', 'POST', json_encode($payload), null, true);
+$logMessage = 'The response code for ' . $url . '/chathost/courseRosters was ' . $curl->responseCode . '.';
 if ($curl->responseCode === 200) {
     $reporting->info($logMessage, 'sending_roster');
     $reporting->saveStep('sending_roster', 'completed');
@@ -232,9 +232,9 @@ foreach ($attachments as $attachment) {
         continue;
     }
     //Check if file exists.  If returns 404, then send file
-    $curl->makeRequest('attachments/' . $attachment->id . '/exists', 'GET', []);
+    $curl->makeRequest('/chathost/attachments/' . $attachment->id . '/exists', 'GET', []);
     if ($curl->responseCode === 404) {
-        $response = $curl->makeRequest('attachments', 'POST', $attachment->toArray(), $filepath);
+        $response = $curl->makeRequest('/chathost/attachments', 'POST', $attachment->toArray(), $filepath);
         if ($curl->responseCode === 200) {
             $reporting->reportProgressSuccess();
         } else {
@@ -260,8 +260,8 @@ $reporting->stopProgress();
  * Send the message payload to the API
  */
 $reporting->info('Sending POST request to ' . $url . 'messages.', 'sending_messages');
-$curl->makeRequest('messages', 'POST', json_encode($payload), null, true);
-$logMessage = 'The response code for ' . $url . 'messages was ' . $curl->responseCode . '.';
+$curl->makeRequest('/chathost/messages', 'POST', json_encode($payload), null, true);
+$logMessage = 'The response code for ' . $url . '/chathost/messages was ' . $curl->responseCode . '.';
 if ($curl->responseCode === 200) {
     $reporting->saveResult('total_messages_sent', count($chats));
     $reporting->info($logMessage, 'sending_messages');
@@ -276,10 +276,12 @@ if ($curl->responseCode === 200) {
  * Now request new messages from the API
  */
 $reporting->saveStep('receiving_messages', 'started');
+$reporting->info('Sleeping To Allow Chathost To Compile Messages.');
+sleep (5);
 $reporting->info('Retrieving new messages.', 'receiving_messages');
 $reporting->info('Sending GET request to ' . $url . 'messages/' . $lastSync . '.', 'receiving_messages');
-$response = $curl->makeRequest('messages/' . $lastSync, 'GET', [], null, true);
-$logMessage = 'The response code for ' . $url . 'messages/' . $lastSync . ' was ' . $curl->responseCode . '.';
+$response = $curl->makeRequest('/chathost/messages/' . $lastSync, 'GET', [], null, true);
+$logMessage = 'The response code for ' . $url . '/chathost/messages/' . $lastSync . ' was ' . $curl->responseCode . '.';
 if ($curl->responseCode === 200) {
     $reporting->info($logMessage, 'receiving_messages');
     $newMessages = json_decode($response);
@@ -340,9 +342,10 @@ if (($curl->responseCode === 200) && (count($newMessages) === 0)) {
             }
 
             $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $attachment->filename;
-            $downloaded = $curl->downloadFile('attachments/' . $attachment->id, $tempPath);
+			$downloaded = $curl->downloadFile($attachment->filepath, $tempPath);
+echo json_encode($downloaded, JSON_PRETTY_PRINT);
             if (!$downloaded) {
-                $reporting->error('Unable to download attachment # ' . $attachment->id . '.', 'receiving_messages');
+                $reporting->error('Unable to download attachment ' . $attachment->filename . '.', 'receiving_messages');
                 $reporting->reportProgressError();
                 $failedMessages->add(
                     $message->_id,
@@ -352,10 +355,13 @@ if (($curl->responseCode === 200) && (count($newMessages) === 0)) {
                 );
                 continue;
             }
-            $reporting->info('Received attachment #' . $attachment->id . '.', 'receiving_messages');
+echo json_encode($attachment, JSON_PRETTY_PRINT);
+            $reporting->info('Received attachment #' . $attachment->filename . '.', 'receiving_messages');
             $attachment->id = $storage->store($attachment->filename, $tempPath);
+			$attachment->filepath = '/';
             $content = $attachment->toString();
             unlink($tempPath);
+echo json_encode($attachment, JSON_PRETTY_PRINT);
         }
         // Location in messages/classes/api.php
         $message = \core_message\api::send_message_to_conversation(
@@ -383,8 +389,8 @@ if (($curl->responseCode === 200) && (count($newMessages) === 0)) {
 $reporting->saveStep('send_missing_attachments', 'started');
 $reporting->info('Checking if the API is missing attachments.', 'send_missing_attachments');
 $reporting->info('Sending POST request to ' . $url . 'attachments/missing.', 'send_missing_attachments');
-$response = $curl->makeRequest('attachments/missing', 'POST', [], null, true);
-$logMessage = 'The response code for ' . $url . 'attachments/missing was ' . $curl->responseCode . '.';
+$response = $curl->makeRequest('/chathost/attachments/missing', 'POST', [], null, true);
+$logMessage = 'The response code for ' . $url . '/chathost/attachments/missing was ' . $curl->responseCode . '.';
 if ($curl->responseCode === 200) {
     $reporting->info($logMessage, 'send_missing_attachments');
     $missing = json_decode($response);
@@ -432,7 +438,7 @@ if (($curl->responseCode === 200) && ((!$response) || (count($missing) === 0))) 
             'filepath'  =>  $file->filepath,
             'filename'  =>  $file->filename
         ];
-        $response = $curl->makeRequest('attachments', 'POST', $data, $filepath);
+        $response = $curl->makeRequest('/chathost/attachments', 'POST', $data, $filepath);
         if ($curl->responseCode === 200) {
             $reporting->reportProgressSuccess();
         } else {
@@ -519,5 +525,5 @@ $reporting->saveStep('script', 'completed');
  * Send the report to the API
  */
 $logs = $reporting->read();
-$curl->makeRequest('logs', 'POST', json_encode($logs), null, true);
+$curl->makeRequest('/chathost/logs', 'POST', json_encode($logs), null, true);
 echo $curl->responseCode;
