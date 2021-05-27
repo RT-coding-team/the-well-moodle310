@@ -124,13 +124,17 @@ $editingTeacherRole = $DB->get_record('role', ['shortname' =>  'editingteacher']
 foreach ($courses as $course) {
     $context = context_course::instance($course->id);
     $data = [
-        'id'            =>  intval($course->id),
-        'course_name'   =>  $course->fullname,
-        'summary'       =>  $course->summary,
-        'created_on'    =>  intval($course->timecreated),
-        'updated_on'    =>  intval($course->timemodified),
-        'students'      =>  [],
-        'teachers'      =>  []
+        'id'            	=>  intval($course->id),
+        'course_name'   	=>  $course->fullname,
+        'summary'       	=>  $course->summary,
+        'created_on'    	=>  intval($course->timecreated),
+        'updated_on'	    =>  intval($course->timemodified),
+        'students'      	=>  [],
+        'teachers'  	    =>  [],
+        'sitename'			=>  get_config('local_chat_attachments', 'site_name'),
+        'siteadmin_name'	=>  get_config('local_chat_attachments', 'siteadmin_name'),
+        'siteadmin_email'	=>  get_config('local_chat_attachments', 'siteadmin_email'),
+        'siteadmin_phone'	=>  get_config('local_chat_attachments', 'siteadmin_phone')
     ];
     $students = get_role_users($studentRole->id, $context);
     foreach ($students as $student) {
@@ -170,6 +174,10 @@ foreach ($courses as $course) {
     }
     $payload[] = $data;
 }
+// Site Administration Data -- Added DM 20210527
+echo json_encode($payload[0], JSON_PRETTY_PRINT);
+//
+
 // $reporting->savePayload('course_rooster', $payload);
 
 /**
