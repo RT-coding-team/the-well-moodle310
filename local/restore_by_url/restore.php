@@ -22,7 +22,7 @@ require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'utilities.php');
 
 admin_externalpage_setup('local_restore_by_url_settings');
 $error = '';
-$destination = dirname(__FILE__) .DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . 'archive.mbz';
+$destination = '/tmp/download.mbz'; // Always use this filename
 
 if (!empty($_POST)) {
     if ((!array_key_exists('form_remote_url_field', $_POST)) || ($_POST['form_remote_url_field'] === '')) {
