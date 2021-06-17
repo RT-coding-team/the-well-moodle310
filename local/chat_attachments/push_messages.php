@@ -88,16 +88,42 @@ else {
 	$reporting->info('Chathost: ' . $url . ' is connected. HTTP Code:', $output);
 }
 
-$reporting->info('Sending Requests to: ' . $url . '.', 'check_last_sync');
-$reporting->saveStep('check_last_sync', 'started');
+$reporting->info('Sending Requests to: ' . $url . '.', 'script');
 $curl = new CurlUtility($url, $token, $boxId);
 $fs = get_file_storage();
 $systemContext = context_system::instance();
 $storage = new FileStorageUtility($DB, $fs, $systemContext->id);
 
 /**
+ * Retrieve and Update Settings via Connectbox Method 
+ * Added by Derek Maxson 20210616
+ */
+$reporting->info('Preparing To Get Settings', 'get_settings');
+$reporting->info('Sending GET request to ' . $url . 'settings.', 'get_settings');
+$response = $curl->makeRequest('/chathost/settings', 'GET', [], null, true);
+$logMessage = 'The response code for ' . $url . '/chathost/settings was ' . $curl->responseCode . '.';
+if ($curl->responseCode === 200) {
+    $reporting->info($logMessage, 'get_settings');
+    $settings = json_decode($response);
+} else {
+    $reporting->error($logMessage, 'get_settings');
+    $reporting->saveStep('get_settings', 'errored');
+    $settings = [];
+}
+// Iterate through each setting and set, then delete the setting from the server
+$reporting->saveResult('get_settings', json_encode($settings, JSON_PRETTY_PRINT));
+foreach ($settings as $setting) {
+	$reporting->info('Executing Setting Change: ' . $setting->key . '=' . $setting->value, 'get_settings');
+	shell_exec("sudo /usr/local/connectbox/bin/ConnectBoxManage.sh set $setting->key $setting->value");
+	$reporting->info('DONE: Setting Change: ' . $setting->key . '=' . $setting->value, 'get_settings');
+	$curl->makeRequest('/chathost/settings/' . $setting->deleteId, 'DELETE', []);
+	$reporting->info('DONE: Delete Setting Change: ' . $setting->key . '=' . $setting->value, 'get_settings');
+}
+
+/**
  * Retrieve the last time we synced
  */
+$reporting->saveStep('check_last_sync', 'started');
 $reporting->info('Sending GET request to ' . $url . 'messageStatus.', 'check_last_sync');
 $lastSync = $curl->makeRequest('/chathost/messageStatus', 'GET', []);
 $logMessage = 'The response code for ' . $url . '/chathost/messageStatus was ' . $curl->responseCode . '.';
