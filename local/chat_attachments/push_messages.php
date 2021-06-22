@@ -95,7 +95,26 @@ $systemContext = context_system::instance();
 $storage = new FileStorageUtility($DB, $fs, $systemContext->id);
 
 /**
- * Retrieve and Update Settings via Connectbox Method 
+ * Send System Logs
+ * Added by Derek Maxson 20210616
+ */
+$reporting->info('Preparing To Get Settings', 'get_settings');
+$reporting->info('Sending Send System Logs ' . $url . 'logs/system.', 'get_settings');
+$yesterday = time() - (24*60*60);
+$query = 'select timecreated as timestamp, eventname as log from mdl_logstore_standard_log where timecreated > ? ORDER BY timecreated ASC';
+$result = $DB->get_records_sql($query, [$yesterday]);
+foreach ($result as $log) {
+	$logs[] = [
+		'timestamp' => $log->timestamp,
+		'log' => $log->log
+	];
+}
+echo json_encode($logs, JSON_PRETTY_PRINT);
+$curl->makeRequest('/chathost/logs/system', 'POST', json_encode($logs) , null, true);
+echo $curl->responseCode;
+
+/**
+ * Retrieve Settings 
  * Added by Derek Maxson 20210616
  */
 $reporting->info('Preparing To Get Settings', 'get_settings');
@@ -426,6 +445,8 @@ if (($curl->responseCode === 200) && (count($newMessages) === 0)) {
     $reporting->stopProgress();
 }
 
+
+
 /**
  * Script finished
  */
@@ -436,6 +457,9 @@ $reporting->saveStep('script', 'completed');
 /**
  * Send the report to the API
  */
-$logs = $reporting->read();
-$curl->makeRequest('/chathost/logs', 'POST', json_encode($logs), null, true);
-echo $curl->responseCode;
+//$reporting->info('Sending Sync Log');
+//$showlogs = $reporting->read();
+// todo this doesn't seem to be pulling the log data to send so I'm disabling for now.
+//echo $showlogs;
+//$curl->makeRequest('/chathost/logs/sync', 'POST', json_encode($logs), null, true);
+//echo $curl->responseCode;
