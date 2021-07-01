@@ -98,7 +98,7 @@ $storage = new FileStorageUtility($DB, $fs, $systemContext->id);
  * Send System Logs
  * Added by Derek Maxson 20210616
  */
-$reporting->info('Preparing To Get Settings', 'get_settings');
+$reporting->info('Preparing To Get Logs', 'get_logs');
 $reporting->info('Sending Send System Logs ' . $url . 'logs/system.', 'get_settings');
 $yesterday = time() - (24*60*60);
 $query = 'select timecreated as timestamp, eventname as log from mdl_logstore_standard_log where timecreated > ? ORDER BY timecreated ASC';
@@ -107,6 +107,18 @@ foreach ($result as $log) {
 	$logs[] = [
 		'timestamp' => $log->timestamp,
 		'log' => $log->log
+	];
+}
+echo json_encode($logs, JSON_PRETTY_PRINT);
+$curl->makeRequest('/chathost/logs/moodle', 'POST', json_encode($logs) , null, true);
+echo $curl->responseCode;
+
+// Now get text file logs -- the server will normalize the timestamps (why can't there be just ONE datetime format in the world??!!)
+$output = shell_exec("cat /var/log/connectbox/captive_portal-access.log");
+$logs = explode("\n", $output);
+foreach ($logs as $log) {
+	$logs[] = [
+		'log' => $log
 	];
 }
 echo json_encode($logs, JSON_PRETTY_PRINT);
