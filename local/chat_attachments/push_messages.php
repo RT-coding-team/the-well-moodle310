@@ -67,6 +67,7 @@ if ((!$boxId) || ($boxId === '')) {
     exit;
 }
 $reporting->saveResult('box_id', $boxId);
+$reporting->saveResult('token', $token);
 if ($url === '') {
     $reporting->error('No URL provided!', 'set_up');
     $reporting->saveResult('status', 'error');
@@ -109,7 +110,6 @@ foreach ($result as $log) {
 		'log' => $log->log
 	];
 }
-echo json_encode($logs, JSON_PRETTY_PRINT);
 $curl->makeRequest('/chathost/logs/moodle', 'POST', json_encode($logs) , null, true);
 echo $curl->responseCode;
 
@@ -121,7 +121,6 @@ foreach ($logs as $log) {
 		'log' => $log
 	];
 }
-echo json_encode($logs, JSON_PRETTY_PRINT);
 $curl->makeRequest('/chathost/logs/system', 'POST', json_encode($logs) , null, true);
 echo $curl->responseCode;
 
@@ -145,8 +144,14 @@ if ($curl->responseCode === 200) {
 $reporting->saveResult('get_settings', json_encode($settings, JSON_PRETTY_PRINT));
 foreach ($settings as $setting) {
 	$reporting->info('Executing Setting Change: ' . $setting->key . '=' . $setting->value, 'get_settings');
-	shell_exec("sudo /usr/local/connectbox/bin/ConnectBoxManage.sh set $setting->key $setting->value");
-	$reporting->info('DONE: Setting Change: ' . $setting->key . '=' . $setting->value, 'get_settings');
+	if ($setting->key === 'moodle-security-key') {
+		set_config('messaging_token', $setting->value, 'local_chat_attachments');
+		$reporting->info('DONE: Setting Change via Moodle: ' . $setting->key . '=' . $setting->value, 'get_settings');
+	}
+	else {
+		shell_exec("sudo /usr/local/connectbox/bin/ConnectBoxManage.sh set $setting->key $setting->value");
+		$reporting->info('DONE: Setting Change: ' . $setting->key . '=' . $setting->value, 'get_settings');
+	}
 	$curl->makeRequest('/chathost/settings/' . $setting->deleteId, 'DELETE', []);
 	$reporting->info('DONE: Delete Setting Change: ' . $setting->key . '=' . $setting->value, 'get_settings');
 }
