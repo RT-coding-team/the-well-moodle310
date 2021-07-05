@@ -1,6 +1,6 @@
 # Chat Attachments
 
-A Moodle local plugin designed to work with a modified version of the mobile app.  It enables displaying images, video and files in a chat message.
+A Moodle local plugin designed to work with a modified version of the mobile app.  It enables displaying images, video and files in a chat message.  See the repo for chathost APIs at https://github.com/RT-coding-team/chathost
 
 ## File Server
 
@@ -96,3 +96,16 @@ php push_messages.php true <boolean:LOG_TO_FILE>
 ```
 
 The first true arguments tells the script that you are using the command line.  The second boolean indicates if you want to log to the JSON file (true) or to the terminal (false).
+
+### Messaging Flow Between Moodle and Chathost
+* Moodle -> Chathost
+* POST /chathost/logs (Array of log objects) -> Returns 200
+* GET /chathost/settings -> Returns Array of settings objects
+* DELETE /chathost/settings/:id -> Returns 200
+* GET /chathost/messageStatus -> Returns timestamp of last successful sync (Chathost begins to compile pending messages)
+* POST /chathost/rosters (Array of course objects) -> Returns 200
+* GET /chathost/attachments/:id/exists -> Returns 200 or 404 (repeated for each attachment pending)
+* POST /chathost/attachments/ (One attachment multipart form) -> Returns 200
+* POST /chathost/messages (Array of message objects) -> Returns 200
+* (Sleep to allow Chathost to complete the tasks)
+* GET /chathost/messages/:synctime -> Returns array of message objects (synctime is from messageStatus API)
