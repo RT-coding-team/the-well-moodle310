@@ -67,7 +67,7 @@ if ((!$boxId) || ($boxId === '')) {
     exit;
 }
 if ($url === '') {
-	set_config('messaging_url', $token, 'local_chat_attachments');
+	set_config('messaging_url', 'https://chat.thewellcloud.cloud', 'local_chat_attachments');
     $reporting->info('No URL provided! Inserting https://chat.thewellcloud.cloud as default', $url );
 }
 if ($token === '') {
