@@ -66,14 +66,18 @@ if ((!$boxId) || ($boxId === '')) {
     $reporting->saveStep('script', 'errored');
     exit;
 }
-$reporting->saveResult('box_id', $boxId);
-$reporting->saveResult('token', $token);
 if ($url === '') {
-    $reporting->error('No URL provided!', 'set_up');
-    $reporting->saveResult('status', 'error');
-    $reporting->saveStep('script', 'errored');
-    exit;
+	set_config('messaging_url', $token, 'local_chat_attachments');
+    $reporting->info('No URL provided! Inserting https://chat.thewellcloud.cloud as default', $url );
 }
+if ($token === '') {
+	$token = shell_exec("python -c 'import uuid; print(str(uuid.uuid4()))'");	
+	set_config('messaging_token', $token, 'local_chat_attachments');
+    $reporting->info('No Token provided! Inserting random as default', $token);
+}
+$reporting->saveResult('box_id', $boxId);
+$reporting->saveResult('url', $url);
+$reporting->saveResult('token', $token);
 
 // Check for active Internet connection to the world
 $output = shell_exec('curl -m 10 -sL -w "%{http_code}\\n" "' . $url . '/chathost/healthcheck" -o /dev/null');
@@ -81,8 +85,8 @@ $output = substr($output, 0, -1);
 if ($output != '200') {
 	$reporting->info('Chathost: ' . $url . ' is unavailable. Not able to sync. HTTP Code:', $output);
 	$reporting->info('Script Exiting!');
-	$reporting->saveResult('status', 'completed');
-	$reporting->saveStep('script', 'completed');
+	$reporting->saveResult('status', 'error');
+	$reporting->saveStep('script', 'errored');
 	die();
 }
 else {
