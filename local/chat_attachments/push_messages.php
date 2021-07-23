@@ -66,13 +66,18 @@ if ((!$boxId) || ($boxId === '')) {
     $reporting->saveStep('script', 'errored');
     exit;
 }
-$reporting->saveResult('box_id', $boxId);
 if ($url === '') {
-    $reporting->error('No URL provided!', 'set_up');
-    $reporting->saveResult('status', 'error');
-    $reporting->saveStep('script', 'errored');
-    exit;
+	set_config('messaging_url', 'https://chat.thewellcloud.cloud', 'local_chat_attachments');
+    $reporting->info('No URL provided! Inserting https://chat.thewellcloud.cloud as default', $url );
 }
+if ($token === '') {
+	$token = shell_exec("python -c 'import uuid; print(str(uuid.uuid4()))'");	
+	set_config('messaging_token', $token, 'local_chat_attachments');
+    $reporting->info('No Token provided! Inserting random as default', $token);
+}
+$reporting->saveResult('box_id', $boxId);
+$reporting->saveResult('url', $url);
+$reporting->saveResult('token', $token);
 
 // Check for active Internet connection to the world
 $output = shell_exec('curl -m 10 -sL -w "%{http_code}\\n" "' . $url . '/chathost/healthcheck" -o /dev/null');
@@ -80,24 +85,85 @@ $output = substr($output, 0, -1);
 if ($output != '200') {
 	$reporting->info('Chathost: ' . $url . ' is unavailable. Not able to sync. HTTP Code:', $output);
 	$reporting->info('Script Exiting!');
-	$reporting->saveResult('status', 'completed');
-	$reporting->saveStep('script', 'completed');
+	$reporting->saveResult('status', 'error');
+	$reporting->saveStep('script', 'errored');
 	die();
 }
 else {
 	$reporting->info('Chathost: ' . $url . ' is connected. HTTP Code:', $output);
 }
 
-$reporting->info('Sending Requests to: ' . $url . '.', 'check_last_sync');
-$reporting->saveStep('check_last_sync', 'started');
+$reporting->info('Sending Requests to: ' . $url . '.', 'script');
 $curl = new CurlUtility($url, $token, $boxId);
 $fs = get_file_storage();
 $systemContext = context_system::instance();
 $storage = new FileStorageUtility($DB, $fs, $systemContext->id);
 
 /**
+ * Send System Logs
+ * Added by Derek Maxson 20210616
+ */
+$reporting->info('Preparing To Get Logs', 'get_logs');
+$reporting->info('Sending Send System Logs ' . $url . 'logs/system.', 'get_settings');
+$yesterday = time() - (24*60*60);
+$query = 'select timecreated as timestamp, eventname as log from mdl_logstore_standard_log where timecreated > ? ORDER BY timecreated ASC';
+$result = $DB->get_records_sql($query, [$yesterday]);
+foreach ($result as $log) {
+	$logs[] = [
+		'timestamp' => $log->timestamp,
+		'log' => $log->log
+	];
+}
+$curl->makeRequest('/chathost/logs/moodle', 'POST', json_encode($logs) , null, true);
+echo $curl->responseCode;
+
+// Now get text file logs -- the server will normalize the timestamps (why can't there be just ONE datetime format in the world??!!)
+$output = shell_exec("cat /var/log/connectbox/captive_portal-access.log");
+$logs = explode("\n", $output);
+foreach ($logs as $log) {
+	$logs[] = [
+		'log' => $log
+	];
+}
+$curl->makeRequest('/chathost/logs/system', 'POST', json_encode($logs) , null, true);
+echo $curl->responseCode;
+
+/**
+ * Retrieve Settings 
+ * Added by Derek Maxson 20210616
+ */
+$reporting->info('Preparing To Get Settings', 'get_settings');
+$reporting->info('Sending GET request to ' . $url . 'settings.', 'get_settings');
+$response = $curl->makeRequest('/chathost/settings', 'GET', [], null, true);
+$logMessage = 'The response code for ' . $url . '/chathost/settings was ' . $curl->responseCode . '.';
+if ($curl->responseCode === 200) {
+    $reporting->info($logMessage, 'get_settings');
+    $settings = json_decode($response);
+} else {
+    $reporting->error($logMessage, 'get_settings');
+    $reporting->saveStep('get_settings', 'errored');
+    $settings = [];
+}
+// Iterate through each setting and set, then delete the setting from the server
+$reporting->saveResult('get_settings', json_encode($settings, JSON_PRETTY_PRINT));
+foreach ($settings as $setting) {
+	$reporting->info('Executing Setting Change: ' . $setting->key . '=' . $setting->value, 'get_settings');
+	if ($setting->key === 'moodle-security-key') {
+		set_config('messaging_token', $setting->value, 'local_chat_attachments');
+		$reporting->info('DONE: Setting Change via Moodle: ' . $setting->key . '=' . $setting->value, 'get_settings');
+	}
+	else {
+		shell_exec("sudo /usr/local/connectbox/bin/ConnectBoxManage.sh set $setting->key $setting->value");
+		$reporting->info('DONE: Setting Change: ' . $setting->key . '=' . $setting->value, 'get_settings');
+	}
+	$curl->makeRequest('/chathost/settings/' . $setting->deleteId, 'DELETE', []);
+	$reporting->info('DONE: Delete Setting Change: ' . $setting->key . '=' . $setting->value, 'get_settings');
+}
+
+/**
  * Retrieve the last time we synced
  */
+$reporting->saveStep('check_last_sync', 'started');
 $reporting->info('Sending GET request to ' . $url . 'messageStatus.', 'check_last_sync');
 $lastSync = $curl->makeRequest('/chathost/messageStatus', 'GET', []);
 $logMessage = 'The response code for ' . $url . '/chathost/messageStatus was ' . $curl->responseCode . '.';
@@ -124,13 +190,17 @@ $editingTeacherRole = $DB->get_record('role', ['shortname' =>  'editingteacher']
 foreach ($courses as $course) {
     $context = context_course::instance($course->id);
     $data = [
-        'id'            =>  intval($course->id),
-        'course_name'   =>  $course->fullname,
-        'summary'       =>  $course->summary,
-        'created_on'    =>  intval($course->timecreated),
-        'updated_on'    =>  intval($course->timemodified),
-        'students'      =>  [],
-        'teachers'      =>  []
+        'id'            	=>  intval($course->id),
+        'course_name'   	=>  $course->fullname,
+        'summary'       	=>  $course->summary,
+        'created_on'    	=>  intval($course->timecreated),
+        'updated_on'	    =>  intval($course->timemodified),
+        'students'      	=>  [],
+        'teachers'  	    =>  [],
+        'sitename'			=>  get_config('local_chat_attachments', 'site_name'),
+        'siteadmin_name'	=>  get_config('local_chat_attachments', 'siteadmin_name'),
+        'siteadmin_email'	=>  get_config('local_chat_attachments', 'siteadmin_email'),
+        'siteadmin_phone'	=>  get_config('local_chat_attachments', 'siteadmin_phone')
     ];
     $students = get_role_users($studentRole->id, $context);
     foreach ($students as $student) {
@@ -170,6 +240,10 @@ foreach ($courses as $course) {
     }
     $payload[] = $data;
 }
+// Site Administration Data -- Added DM 20210527
+echo json_encode($payload[0], JSON_PRETTY_PRINT);
+//
+
 // $reporting->savePayload('course_rooster', $payload);
 
 /**
@@ -392,6 +466,8 @@ if (($curl->responseCode === 200) && (count($newMessages) === 0)) {
     $reporting->stopProgress();
 }
 
+
+
 /**
  * Script finished
  */
@@ -402,6 +478,9 @@ $reporting->saveStep('script', 'completed');
 /**
  * Send the report to the API
  */
-$logs = $reporting->read();
-$curl->makeRequest('/chathost/logs', 'POST', json_encode($logs), null, true);
-echo $curl->responseCode;
+//$reporting->info('Sending Sync Log');
+//$showlogs = $reporting->read();
+// todo this doesn't seem to be pulling the log data to send so I'm disabling for now.
+//echo $showlogs;
+//$curl->makeRequest('/chathost/logs/sync', 'POST', json_encode($logs), null, true);
+//echo $curl->responseCode;

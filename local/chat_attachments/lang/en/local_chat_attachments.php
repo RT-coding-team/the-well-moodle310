@@ -54,3 +54,13 @@ $string['tasks_message_reporting_error'] = 'Sorry, we were unable to report the 
 $string['tasks_message_reporting_success'] = 'Thank you! We reported the issue.';
 $string['tasks_page_title'] = 'The Well: Online Tasks';
 $string['tasks_title'] = 'Online Tasks';
+
+// Added 20210527 for Site Administration / Dashboard Values
+$string['site_name'] = 'Site Name';
+$string['site_name_desc'] = 'Name of Well Site -- Such as Location or Village or Group (Up To 12 characters - Letters and Numbers Only - No Spaces or Symbols)';
+$string['siteadmin_name'] = 'Site Administrator Name';
+$string['siteadmin_name_desc'] = 'The Name of the Site Administrator';
+$string['siteadmin_email'] = 'Site Administrator Email Address';
+$string['siteadmin_email_desc'] = 'Email Address for Site Administrator';
+$string['siteadmin_phone'] = 'Site Administrator Phone';
+$string['siteadmin_phone_desc'] = 'Phone number including country code / Whatsapp';
