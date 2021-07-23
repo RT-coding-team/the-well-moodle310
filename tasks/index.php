@@ -121,14 +121,6 @@ require_once(dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'config.php');
                   <td><?php echo get_string('tasks_label_receiving_messages', 'local_chat_attachments'); ?></td>
                 </tr>
                 <tr>
-                  <td class="step-sending-missing"><i class="far fa-square"></i></td>
-                  <td><?php echo get_string('tasks_label_sending_missing_attachments', 'local_chat_attachments'); ?></td>
-                </tr>
-                <tr>
-                  <td class="step-receiving-missing"><i class="far fa-square"></i></td>
-                  <td><?php echo get_string('tasks_label_receiving_missing_attachments', 'local_chat_attachments'); ?></td>
-                </tr>
-                <tr>
                   <td class="step-finished"><i class="far fa-square"></i></td>
                   <td><?php echo get_string('tasks_label_completed', 'local_chat_attachments'); ?></td>
                 </tr>

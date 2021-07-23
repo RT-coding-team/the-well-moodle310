@@ -93,12 +93,6 @@ function populateStats(stats) {
   } else {
       parent.find('.info-messages-received-failed').first().text('-');
   }
-
-  if (stats.hasOwnProperty('total_missing_attachments_requested')) {
-    parent.find('.info-missing-attachments').first().text(stats.total_missing_attachments_requested);
-  } else {
-    parent.find('.info-missing-attachments').first().text('-');
-  }
 }
 /**
  * Populate the steps
@@ -114,8 +108,6 @@ function populateSteps(steps) {
   parent.find('.step-sending-messages').first().html(getStepIcon(steps.sending_messages));
   parent.find('.step-sending-attachments').first().html(getStepIcon(steps.sending_attachments));
   parent.find('.step-receiving-messages').first().html(getStepIcon(steps.receiving_messages));
-  parent.find('.step-sending-missing').first().html(getStepIcon(steps.send_missing_attachments));
-  parent.find('.step-receiving-missing').first().html(getStepIcon(steps.receive_missing_attachments));
   parent.find('.step-finished').first().html(getStepIcon(steps.script));
 }
 /**
