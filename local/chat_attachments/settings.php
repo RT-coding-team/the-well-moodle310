@@ -58,6 +58,38 @@ if ($hassiteconfig) {
                 ''
             )
         );
+        $page->add(
+            new admin_setting_configtext(
+                'local_chat_attachments/site_name',
+                new lang_string('site_name', 'local_chat_attachments'),
+                new lang_string('site_name_desc', 'local_chat_attachments'),
+                ''
+            )
+        );
+        $page->add(
+            new admin_setting_configtext(
+                'local_chat_attachments/siteadmin_name',
+                new lang_string('siteadmin_name', 'local_chat_attachments'),
+                new lang_string('siteadmin_name_desc', 'local_chat_attachments'),
+                ''
+            )
+        );
+        $page->add(
+            new admin_setting_configtext(
+                'local_chat_attachments/siteadmin_email',
+                new lang_string('siteadmin_email', 'local_chat_attachments'),
+                new lang_string('siteadmin_email_desc', 'local_chat_attachments'),
+                ''
+            )
+        );
+        $page->add(
+            new admin_setting_configtext(
+                'local_chat_attachments/siteadmin_phone',
+                new lang_string('siteadmin_phone', 'local_chat_attachments'),
+                new lang_string('siteadmin_phone_desc', 'local_chat_attachments'),
+                ''
+            )
+        );
     }
 
     $ADMIN->add('localplugins', $page);
