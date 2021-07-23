@@ -16,8 +16,8 @@
 /**
  * Localization file
  */
-$string['manage'] = 'Manage Chat Attachments';
-$string['pluginname'] = 'Chat Attachments';
+$string['manage'] = 'Manage Well Settings';
+$string['pluginname'] = 'Well Settings';
 $string['brand'] = 'The Well';
 $string['messaging_support_email'] = 'Support Email Address';
 $string['messaging_support_email_desc'] = 'The email address where support questions are sent.';
