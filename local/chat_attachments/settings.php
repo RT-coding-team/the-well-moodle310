@@ -18,6 +18,8 @@
  */
 defined('MOODLE_INTERNAL') || die();
 
+require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'admin_setting_configtext_custom.php');
+
 if ($hassiteconfig) {
     /**
      * Add a local settings page
@@ -59,7 +61,7 @@ if ($hassiteconfig) {
             )
         );
         $page->add(
-            new admin_setting_configtext(
+            new admin_setting_configtext_custom(
                 'local_chat_attachments/site_name',
                 new lang_string('site_name', 'local_chat_attachments'),
                 new lang_string('site_name_desc', 'local_chat_attachments'),
