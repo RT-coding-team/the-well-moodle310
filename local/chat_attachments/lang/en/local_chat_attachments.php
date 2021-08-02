@@ -16,8 +16,8 @@
 /**
  * Localization file
  */
-$string['manage'] = 'Manage Chat Attachments';
-$string['pluginname'] = 'Chat Attachments';
+$string['manage'] = 'Manage Well Settings';
+$string['pluginname'] = 'Well Settings';
 $string['brand'] = 'The Well';
 $string['messaging_support_email'] = 'Support Email Address';
 $string['messaging_support_email_desc'] = 'The email address where support questions are sent.';
@@ -64,3 +64,6 @@ $string['siteadmin_email'] = 'Site Administrator Email Address';
 $string['siteadmin_email_desc'] = 'Email Address for Site Administrator';
 $string['siteadmin_phone'] = 'Site Administrator Phone';
 $string['siteadmin_phone_desc'] = 'Phone number including country code / Whatsapp';
+$string['field_too_long'] = 'This field must be less than {$a} characters.';
+$string['field_no_spaces'] = 'The field must not contain spaces.';
+$string['field_letters_numbers_only'] = 'The field can only contain letters and numbers.';
