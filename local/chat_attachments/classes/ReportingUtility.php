@@ -79,9 +79,7 @@ class ReportingUtility
             'sending_roster'                =>  'pending',
             'sending_messages'              =>  'pending',
             'sending_attachments'           =>  'pending',
-            'receiving_messages'            =>  'pending',
-            'send_missing_attachments'      =>  'pending',
-            'receive_missing_attachments'   =>  'pending'
+            'receiving_messages'            =>  'pending'
         ],
         'support_token' =>  null
     ];
