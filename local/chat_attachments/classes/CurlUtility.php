@@ -69,7 +69,9 @@ class CurlUtility
         if ($url === '') {
             throw new InvalidArgumentException('You must provide a valid URL.');
         }
-
+		if ($boxId === '') {
+            throw new InvalidArgumentException('You must provide a valid boxId.');		
+		}
         if (substr($url, -1) !== '/') {
             /**
              * Add the trailing slash if missing
@@ -226,6 +228,9 @@ class CurlUtility
         }
         if ($this->boxId !== '') {
             $headers[] = 'X-boxid: ' . $this->boxId;
+        }
+        else {
+            $headers[] = 'X-boxid: NOTFOUND';        
         }
         return $headers;
     }

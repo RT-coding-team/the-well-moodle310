@@ -67,8 +67,9 @@ if ((!$boxId) || ($boxId === '')) {
     exit;
 }
 if ($url === '') {
-	set_config('messaging_url', 'https://chat.thewellcloud.cloud', 'local_chat_attachments');
-    $reporting->info('No URL provided! Inserting https://chat.thewellcloud.cloud as default', $url );
+	$url = "https://chat.thewellcloud.cloud";
+	set_config('messaging_url', $url, 'local_chat_attachments');
+	$reporting->info('No URL provided! Inserting default', $url );
 }
 if ($token === '') {
 	$token = shell_exec("python -c 'import uuid; print(str(uuid.uuid4()))'");	
@@ -80,7 +81,7 @@ $reporting->saveResult('url', $url);
 $reporting->saveResult('token', $token);
 
 // Check for active Internet connection to the world
-$output = shell_exec('curl -m 10 -sL -w "%{http_code}\\n" "' . $url . '/chathost/healthcheck" -o /dev/null');
+$output = shell_exec('curl -m 10 -sL -w "%{http_code}\\n" "' . $url . '/chathost/healthcheck?boxid=' . $boxId . '" -o /dev/null');
 $output = substr($output, 0, -1);
 if ($output != '200') {
 	$reporting->info('Chathost: ' . $url . ' is unavailable. Not able to sync. HTTP Code:', $output);
@@ -99,12 +100,17 @@ $fs = get_file_storage();
 $systemContext = context_system::instance();
 $storage = new FileStorageUtility($DB, $fs, $systemContext->id);
 
+# Test Security
+$reporting->info('Checking Secuity Key');
+$lastSync = $curl->makeRequest('/chathost/check', 'GET');
+$reporting->info('Chathost: Securty Check says ' . $securityCheck);
+
 /**
  * Send System Logs
  * Added by Derek Maxson 20210616
  */
 $reporting->info('Preparing To Get Logs', 'get_logs');
-$reporting->info('Sending Send System Logs ' . $url . 'logs/system.', 'get_settings');
+$reporting->info('Sending System Logs ' . $url . 'logs/system.', 'get_settings');
 $yesterday = time() - (24*60*60);
 $query = 'select timecreated as timestamp, eventname as log from mdl_logstore_standard_log where timecreated > ? ORDER BY timecreated ASC';
 $result = $DB->get_records_sql($query, [$yesterday]);
@@ -114,6 +120,7 @@ foreach ($result as $log) {
 		'log' => $log->log
 	];
 }
+echo json_encode($logs);
 $curl->makeRequest('/chathost/logs/moodle', 'POST', json_encode($logs) , null, true);
 echo $curl->responseCode;
 
