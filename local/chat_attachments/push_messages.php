@@ -102,7 +102,7 @@ $storage = new FileStorageUtility($DB, $fs, $systemContext->id);
 
 # Test Security
 $reporting->info('Checking Secuity Key');
-$lastSync = $curl->makeRequest('/chathost/check', 'GET');
+$lastSync = $curl->makeRequest('/chathost/check', 'GET', [], null, true);
 $reporting->info('Chathost: Securty Check says ' . $securityCheck);
 
 /**
