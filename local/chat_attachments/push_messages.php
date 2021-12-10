@@ -57,8 +57,7 @@ if (!$cliScript) {
 }
 $url = get_config('local_chat_attachments', 'messaging_url');
 $token = get_config('local_chat_attachments', 'messaging_token');
-$output = shell_exec("cat /sys/class/net/eth0/address | tr ':' '-'");
-$boxId = substr($output, 0, -1);
+$boxId = shell_exec("cat /sys/class/net/eth0/address | tr ':' '-' | perl -pe 'chomp'");
 
 if ((!$boxId) || ($boxId === '')) {
     $reporting->error('Unable to retrieve the Box ID.', 'set_up');
@@ -72,7 +71,7 @@ if ($url === '') {
 	$reporting->info('No URL provided! Inserting default', $url );
 }
 if ($token === '') {
-	$token = shell_exec("python -c 'import uuid; print(str(uuid.uuid4()))'");	
+	$token = shell_exec("python -c 'import uuid; print(str(uuid.uuid4()))' | perl -pe 'chomp'");	
 	set_config('messaging_token', $token, 'local_chat_attachments');
     $reporting->info('No Token provided! Inserting random as default', $token);
 }
@@ -102,15 +101,16 @@ $storage = new FileStorageUtility($DB, $fs, $systemContext->id);
 
 # Test Security
 $reporting->info('Checking Secuity Key');
-$lastSync = $curl->makeRequest('/chathost/check', 'GET', [], null, true);
-$reporting->info('Chathost: Securty Check says ' . $securityCheck);
+$securityCheck = $curl->makeRequest('/chathost/check', 'GET', [], null, true);
+$reporting->info('Chathost: Security Check says ' . $securityCheck);
+
 
 /**
  * Send System Logs
  * Added by Derek Maxson 20210616
  */
-$reporting->info('Preparing To Get Logs', 'get_logs');
-$reporting->info('Sending System Logs ' . $url . 'logs/system.', 'get_settings');
+$reporting->info('Preparing To Send Logs', 'sending_logs');
+$reporting->info('Sending Moodle Logs ' . $url . '/chathost/logs/moodle.', 'sending_logs');
 $yesterday = time() - (24*60*60);
 $query = 'select timecreated as timestamp, eventname as log from mdl_logstore_standard_log where timecreated > ? ORDER BY timecreated ASC';
 $result = $DB->get_records_sql($query, [$yesterday]);
@@ -134,6 +134,7 @@ foreach ($logs as $log) {
 }
 $curl->makeRequest('/chathost/logs/system', 'POST', json_encode($logs) , null, true);
 echo $curl->responseCode;
+$reporting->saveStep('sending_logs', 'completed');
 
 /**
  * Retrieve Settings 
@@ -149,6 +150,7 @@ if ($curl->responseCode === 200) {
 } else {
     $reporting->error($logMessage, 'get_settings');
     $reporting->saveStep('get_settings', 'errored');
+    $reporting->saveStep('script', 'errored');
     $settings = [];
 }
 // Iterate through each setting and set, then delete the setting from the server
@@ -248,7 +250,7 @@ foreach ($courses as $course) {
     $payload[] = $data;
 }
 // Site Administration Data -- Added DM 20210527
-echo json_encode($payload[0], JSON_PRETTY_PRINT);
+echo json_encode($payload, JSON_PRETTY_PRINT);
 //
 
 // $reporting->savePayload('course_rooster', $payload);
@@ -256,8 +258,8 @@ echo json_encode($payload[0], JSON_PRETTY_PRINT);
 /**
  * Send the course payload to the API
  */
-$reporting->info('Sending POST request to ' . $url . 'courseRosters.', 'sending_roster');
-$curl->makeRequest('/chathost/courseRosters', 'POST', json_encode($payload), null, true);
+$reporting->info('Sending POST request to ' . $url . '/chathost/courseRosters.', 'sending_roster');
+curl->makeRequest('/chathost/courseRosters', 'POST', json_encode($payload) , null, true);
 $logMessage = 'The response code for ' . $url . '/chathost/courseRosters was ' . $curl->responseCode . '.';
 if ($curl->responseCode === 200) {
     $reporting->info($logMessage, 'sending_roster');
