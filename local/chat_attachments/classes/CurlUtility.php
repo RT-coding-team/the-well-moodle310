@@ -102,9 +102,10 @@ class CurlUtility
     {
         $url = $this->url . '' . ltrim($path, '/');
         $method = strtoupper($method);
-        $headers = $this->getHeaders();
+        $headers = [];
+
         if ($isJson) {
-            $headers[] = 'Content-Type:application/json';
+            $headers[] = 'Content-Type: application/json';
         }
         if (($filepath) && ($method !== 'POST')) {
             throw new InvalidArgumentException('If you supply a filepath, the method must be POST.');
@@ -143,6 +144,10 @@ class CurlUtility
             CURLOPT_USERAGENT,
             'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13'
         );
+
+		// Add the authorization headers
+		$headers[] = 'Authorization: Bearer ' . $this->boxId . '|' . $this->token;
+
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -159,7 +164,7 @@ class CurlUtility
         /**
          * execute request
          */
-        $result = curl_exec($ch) or die(curl_error($ch));
+        $result = curl_exec($ch);// or die(curl_error($ch));
         $this->responseCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $this->lastVisitedURL = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
         /**
@@ -181,7 +186,8 @@ class CurlUtility
     public function downloadFile($sourcePath, $destination)
     {
         $url = $this->url . '' . ltrim($sourcePath, '/');
-        $headers = $this->getHeaders();
+		$headers = [];
+		$headers[] = 'Authorization: Bearer ' . $this->boxId . '|' . $this->token;		
         $write = fopen($destination, 'w+b');
         //Here is the file we are downloading, replace spaces with %20
         $ch = curl_init(str_replace(' ', '%20', $url));
@@ -214,24 +220,5 @@ class CurlUtility
         return rtrim($fieldsString, '&');
     }
 
-    /**
-     * Get the headers.
-     *
-     * @return  array   An array of headers.
-     * @access  private
-     */
-    private function getHeaders()
-    {
-        $headers = [];
-        if ($this->token !== '') {
-            $headers[] = 'Authorization: Bearer ' . $this->token;
-        }
-        if ($this->boxId !== '') {
-            $headers[] = 'X-boxid: ' . $this->boxId;
-        }
-        else {
-            $headers[] = 'X-boxid: NOTFOUND';        
-        }
-        return $headers;
-    }
+
 }
