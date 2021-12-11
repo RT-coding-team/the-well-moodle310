@@ -259,7 +259,7 @@ echo json_encode($payload, JSON_PRETTY_PRINT);
  * Send the course payload to the API
  */
 $reporting->info('Sending POST request to ' . $url . '/chathost/courseRosters.', 'sending_roster');
-curl->makeRequest('/chathost/courseRosters', 'POST', json_encode($payload) , null, true);
+$curl->makeRequest('/chathost/courseRosters', 'POST', json_encode($payload) , null, true);
 $logMessage = 'The response code for ' . $url . '/chathost/courseRosters was ' . $curl->responseCode . '.';
 if ($curl->responseCode === 200) {
     $reporting->info($logMessage, 'sending_roster');
