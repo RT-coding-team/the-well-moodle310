@@ -16,7 +16,7 @@ if (count($courses) == 0) {
 }
 
 foreach ($courses as $course) {
-	$command = 'sudo -u www-data php /var/www/moodle/admin/cli/restore_backup.php -f=' . $course . ' -c=1';
+	$command = 'sudo -u www-data php /var/www/moodle/admin/cli/restore_backup.php -f="' . $course . '" -c=1';
 	echo "Restoring $course: $command\n";
 
 	$result = `$command`;
