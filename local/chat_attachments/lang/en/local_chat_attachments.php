@@ -16,8 +16,8 @@
 /**
  * Localization file
  */
-$string['manage'] = 'Manage Chat Attachments';
-$string['pluginname'] = 'Chat Attachments';
+$string['manage'] = 'Manage Well Settings';
+$string['pluginname'] = 'Well Settings';
 $string['brand'] = 'The Well';
 $string['messaging_support_email'] = 'Support Email Address';
 $string['messaging_support_email_desc'] = 'The email address where support questions are sent.';
@@ -38,7 +38,6 @@ $string['tasks_label_attachments_sent'] = 'Attachments Sent';
 $string['tasks_label_attachments_sent_failed'] = 'Attachments Failed to Send';
 $string['tasks_label_messages_received'] = 'Messages Received';
 $string['tasks_label_messages_received_failed'] = 'Messages Failed to Receive';
-$string['tasks_label_missing_attachments'] = 'Missing Attachments';
 $string['tasks_label_steps'] = 'Steps';
 $string['tasks_label_started'] = 'Started';
 $string['tasks_label_check_last_sync'] = 'Checking Last Time Synced';
@@ -46,8 +45,6 @@ $string['tasks_label_sending_roster'] = 'Sending Roster';
 $string['tasks_label_sending_messages'] = 'Sending Messages';
 $string['tasks_label_sending_attachments'] = 'Sending Attachments';
 $string['tasks_label_receiving_messages'] = 'Receiving Messages';
-$string['tasks_label_sending_missing_attachments'] = 'Sending Missing Attachments';
-$string['tasks_label_receiving_missing_attachments'] = 'Receiving Missing Attachments';
 $string['tasks_label_completed'] = 'Completed';
 $string['tasks_message_no_problems'] = 'There are no problems to report.';
 $string['tasks_message_reporting_error'] = 'Sorry, we were unable to report the problem. Please try again.';
@@ -64,3 +61,6 @@ $string['siteadmin_email'] = 'Site Administrator Email Address';
 $string['siteadmin_email_desc'] = 'Email Address for Site Administrator';
 $string['siteadmin_phone'] = 'Site Administrator Phone';
 $string['siteadmin_phone_desc'] = 'Phone number including country code / Whatsapp';
+$string['field_too_long'] = 'This field must be less than {$a} characters.';
+$string['field_no_spaces'] = 'The field must not contain spaces.';
+$string['field_letters_numbers_only'] = 'The field can only contain letters and numbers.';

@@ -79,3 +79,39 @@ function local_chat_attachments_pluginfile(
     }
     send_stored_file($file, 86400, 0, $forcedownload, $options);
 }
+
+/**
+ *
+ * Extend page navigation
+ *
+ * @param global_navigation $nav
+ */
+function local_well_settings_extends_navigation(global_navigation $nav) {
+    return local_well_settings_extend_navigation($nav);
+}
+
+/**
+ *
+ * Extend navigation to show the pages in the navigation block
+ *
+ * @param global_navigation $nav
+ * @throws coding_exception
+ * @throws dml_exception
+ * @throws moodle_exception
+ */
+function local_well_settings_extend_navigation(global_navigation $nav) {
+    global $CFG;
+    $context = context_system::instance();
+    $pluginname = get_string('pluginname', 'local_well_settings');
+    if (is_siteadmin()) {
+        $mainnode = $nav->add(
+            get_string('pluginname', 'local_well_settings'),
+            new moodle_url($CFG->wwwroot . '/admin/settings.php?section=managelocalchatattachments'),
+            navigation_node::TYPE_CONTAINER,
+            'local_well_settings',
+            'local_well_settings',
+            new pix_icon('settings', $pluginname, 'local_well_settings')
+        );
+        $mainnode->showinflatnavigation = true;
+    }
+}
