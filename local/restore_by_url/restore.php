@@ -35,16 +35,10 @@ if (!empty($_POST)) {
 
     if ($error === '') {
         set_time_limit(0);
-        download_remote_archive($remoteFile, $destination);
-
-        if (file_exists($destination)) {
-            $scriptPath = '/usr/local/connectbox/bin/ConnectBoxManage.sh';
-            exec('sudo ' . $scriptPath . ' set course-download ' . $destination . ' /tmp/coursedownload.log 2>&1');
-            header('Location: ' . new moodle_url('/local/restore_by_url/restore.php?success=true'));
-            exit();
-        } else {
-            $error = get_string('form_error_unable_to_download', 'local_restore_by_url');
-        }
+        $scriptPath = '/usr/local/connectbox/bin/ConnectBoxManage.sh';
+        exec('sudo ' . $scriptPath . ' set course-download ' . $remoteFile . ' /tmp/coursedownload.log 2>&1');
+        header('Location: ' . new moodle_url('/local/restore_by_url/restore.php?success=true'));
+        exit();
     }
 }
 $success = '';
