@@ -38,8 +38,8 @@ if (!empty($_POST)) {
         download_remote_archive($remoteFile, $destination);
 
         if (file_exists($destination)) {
-            $scriptPath = $CFG->dirroot . DIRECTORY_SEPARATOR . 'admin' . DIRECTORY_SEPARATOR . 'cli' . DIRECTORY_SEPARATOR . 'restore_backup.php';
-            exec('php ' . $scriptPath . ' --categoryid=1 --file=' . $destination);
+            $scriptPath = '/usr/local/connectbox/bin/ConnectBoxManage.sh';
+            exec('sudo ' . $scriptPath . ' set course-download ' . $destination . ' /tmp/coursedownload.log 2>&1');
             header('Location: ' . new moodle_url('/local/restore_by_url/restore.php?success=true'));
             exit();
         } else {
