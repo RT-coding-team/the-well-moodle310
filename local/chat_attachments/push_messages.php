@@ -162,7 +162,7 @@ foreach ($settings as $setting) {
 		$reporting->info('DONE: Setting Change via Moodle: ' . $setting->key . '=' . $setting->value, 'get_settings');
 	}
 	else {
-		shell_exec("sudo /usr/local/connectbox/bin/ConnectBoxManage.sh set $setting->key $setting->value");
+		shell_exec("sudo connectboxmanage set $setting->key $setting->value");
 		$reporting->info('DONE: Setting Change: ' . $setting->key . '=' . $setting->value, 'get_settings');
 	}
 	$curl->makeRequest('/chathost/settings/' . $setting->deleteId, 'DELETE', []);
