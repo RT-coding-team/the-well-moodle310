@@ -159,6 +159,7 @@ foreach ($settings as $setting) {
 	$reporting->info('Executing Setting Change: ' . $setting->key . '=' . $setting->value, 'get_settings');
 	if ($setting->key === 'moodle-security-key') {
 		set_config('messaging_token', $setting->value, 'local_chat_attachments');
+		shell_exec("sudo connectboxmanage set securitykey $setting->value");
 		$reporting->info('DONE: Setting Change via Moodle: ' . $setting->key . '=' . $setting->value, 'get_settings');
 	}
 	else {
