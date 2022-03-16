@@ -104,72 +104,6 @@ $reporting->info('Checking Secuity Key');
 $securityCheck = $curl->makeRequest('/chathost/check', 'GET', [], null, true);
 $reporting->info('Chathost: Security Check says ' . $securityCheck);
 
-
-/**
- * Send System Logs
- * Added by Derek Maxson 20210616
- */
-$reporting->info('Preparing To Send Logs', 'sending_logs');
-$reporting->info('Sending Moodle Logs ' . $url . '/chathost/logs/moodle.', 'sending_logs');
-$yesterday = time() - (24*60*60);
-$query = 'select timecreated as timestamp, eventname as log from mdl_logstore_standard_log where timecreated > ? ORDER BY timecreated ASC';
-$result = $DB->get_records_sql($query, [$yesterday]);
-foreach ($result as $log) {
-	$logs[] = [
-		'timestamp' => $log->timestamp,
-		'log' => $log->log
-	];
-}
-echo json_encode($logs);
-$curl->makeRequest('/chathost/logs/moodle', 'POST', json_encode($logs) , null, true);
-echo $curl->responseCode;
-
-// Now get text file logs -- the server will normalize the timestamps (why can't there be just ONE datetime format in the world??!!)
-$output = shell_exec("cat /var/log/connectbox/captive_portal-access.log");
-$logs = explode("\n", $output);
-foreach ($logs as $log) {
-	$logs[] = [
-		'log' => $log
-	];
-}
-$curl->makeRequest('/chathost/logs/system', 'POST', json_encode($logs) , null, true);
-echo $curl->responseCode;
-$reporting->saveStep('sending_logs', 'completed');
-
-/**
- * Retrieve Settings 
- * Added by Derek Maxson 20210616
- */
-$reporting->info('Preparing To Get Settings', 'get_settings');
-$reporting->info('Sending GET request to ' . $url . 'settings.', 'get_settings');
-$response = $curl->makeRequest('/chathost/settings', 'GET', [], null, true);
-$logMessage = 'The response code for ' . $url . '/chathost/settings was ' . $curl->responseCode . '.';
-if ($curl->responseCode === 200) {
-    $reporting->info($logMessage, 'get_settings');
-    $settings = json_decode($response);
-} else {
-    $reporting->error($logMessage, 'get_settings');
-    $reporting->saveStep('get_settings', 'errored');
-    $reporting->saveStep('script', 'errored');
-    $settings = [];
-}
-// Iterate through each setting and set, then delete the setting from the server
-$reporting->saveResult('get_settings', json_encode($settings, JSON_PRETTY_PRINT));
-foreach ($settings as $setting) {
-	$reporting->info('Executing Setting Change: ' . $setting->key . '=' . $setting->value, 'get_settings');
-	if ($setting->key === 'moodle-security-key') {
-		set_config('messaging_token', $setting->value, 'local_chat_attachments');
-		shell_exec("sudo connectboxmanage set securitykey $setting->value");
-		$reporting->info('DONE: Setting Change via Moodle: ' . $setting->key . '=' . $setting->value, 'get_settings');
-	}
-	else {
-		shell_exec("sudo connectboxmanage set $setting->key $setting->value");
-		$reporting->info('DONE: Setting Change: ' . $setting->key . '=' . $setting->value, 'get_settings');
-	}
-	$curl->makeRequest('/chathost/settings/' . $setting->deleteId, 'DELETE', []);
-	$reporting->info('DONE: Delete Setting Change: ' . $setting->key . '=' . $setting->value, 'get_settings');
-}
-
 /**
  * Retrieve the last time we synced
  */
@@ -474,6 +408,73 @@ if (($curl->responseCode === 200) && (count($newMessages) === 0)) {
         $reporting->saveStep('receiving_messages', 'completed');
     }
     $reporting->stopProgress();
+}
+
+
+/**
+ * Send System Logs
+ * Added by Derek Maxson 20210616
+ */
+$reporting->info('Preparing To Send Logs', 'sending_logs');
+$reporting->info('Sending Moodle Logs ' . $url . '/chathost/logs/moodle.', 'sending_logs');
+$yesterday = time() - (24*60*60);
+$query = 'select timecreated as timestamp, eventname as log from mdl_logstore_standard_log where timecreated > ? ORDER BY timecreated ASC';
+$result = $DB->get_records_sql($query, [$yesterday]);
+foreach ($result as $log) {
+	$logs[] = [
+		'timestamp' => $log->timestamp,
+		'log' => $log->log
+	];
+}
+echo json_encode($logs);
+$curl->makeRequest('/chathost/logs/moodle', 'POST', json_encode($logs) , null, true);
+echo $curl->responseCode;
+
+// Now get text file logs -- the server will normalize the timestamps (why can't there be just ONE datetime format in the world??!!)
+$output = shell_exec("cat /var/log/connectbox/captive_portal-access.log");
+$logs = explode("\n", $output);
+foreach ($logs as $log) {
+	$logs[] = [
+		'log' => $log
+	];
+}
+$curl->makeRequest('/chathost/logs/system', 'POST', json_encode($logs) , null, true);
+echo $curl->responseCode;
+$reporting->saveStep('sending_logs', 'completed');
+
+/**
+ * Retrieve Settings 
+ * Added by Derek Maxson 20210616
+ */
+$reporting->info('Preparing To Get Settings', 'get_settings');
+$reporting->info('Sending GET request to ' . $url . 'settings.', 'get_settings');
+$response = $curl->makeRequest('/chathost/settings', 'GET', [], null, true);
+$logMessage = 'The response code for ' . $url . '/chathost/settings was ' . $curl->responseCode . '.';
+if ($curl->responseCode === 200) {
+    $reporting->info($logMessage, 'get_settings');
+    $settings = json_decode($response);
+} else {
+    $reporting->error($logMessage, 'get_settings');
+    $reporting->saveStep('get_settings', 'errored');
+    $reporting->saveStep('script', 'errored');
+    $settings = [];
+}
+// Iterate through each setting and set, then delete the setting from the server
+$reporting->saveResult('get_settings', json_encode($settings, JSON_PRETTY_PRINT));
+foreach ($settings as $setting) {
+	$reporting->info('Executing Setting Change: ' . $setting->key . '=' . $setting->value, 'get_settings');
+	if ($setting->key === 'moodle-security-key') {
+		set_config('messaging_token', $setting->value, 'local_chat_attachments');
+		shell_exec("sudo connectboxmanage set securitykey $setting->value");
+		$reporting->info('DONE: Setting Change via Moodle: ' . $setting->key . '=' . $setting->value, 'get_settings');
+	}
+	else {
+		$output = shell_exec("sudo connectboxmanage set $setting->key $setting->value");
+		$reporting->info($output);
+		$reporting->info('DONE: Setting Change: ' . $setting->key . '=' . $setting->value, 'get_settings');
+	}
+	$curl->makeRequest('/chathost/settings/' . $setting->deleteId, 'DELETE', []);
+	$reporting->info('DONE: Delete Setting Change: ' . $setting->key . '=' . $setting->value, 'get_settings');
 }
 
 
