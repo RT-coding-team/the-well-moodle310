@@ -144,7 +144,8 @@ foreach ($courses as $course) {
         'sitename'			=>  get_config('local_chat_attachments', 'site_name'),
         'siteadmin_name'	=>  get_config('local_chat_attachments', 'siteadmin_name'),
         'siteadmin_email'	=>  get_config('local_chat_attachments', 'siteadmin_email'),
-        'siteadmin_phone'	=>  get_config('local_chat_attachments', 'siteadmin_phone')
+        'siteadmin_phone'	=>  get_config('local_chat_attachments', 'siteadmin_phone'),
+        'siteadmin_country'	=>  get_config('local_chat_attachments', 'siteadmin_country'),        
     ];
     $students = get_role_users($studentRole->id, $context);
     foreach ($students as $student) {

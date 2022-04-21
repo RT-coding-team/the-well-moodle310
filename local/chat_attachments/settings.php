@@ -92,6 +92,14 @@ if ($hassiteconfig) {
                 ''
             )
         );
+        $page->add(
+            new admin_setting_configtext(
+                'local_chat_attachments/siteadmin_country',
+                new lang_string('siteadmin_country', 'local_chat_attachments'),
+                new lang_string('siteadmin_country_desc', 'local_chat_attachments'),
+                ''
+            )
+        );
     }
 
     $ADMIN->add('localplugins', $page);
