@@ -477,7 +477,9 @@ foreach ($settings as $setting) {
 	$reporting->info('DONE: Delete Setting Change: ' . $setting->key . '=' . $setting->value, 'get_settings');
 }
 
-
+// Kick Off lazyLoader to sync any content subscriptions
+$reporting->info('Launch connectboxmanage do openwellrefresh in background to sync subscribed content', 'get_settings');
+shell_exec("sudo connectboxmanage do openwellrefresh >/dev/null 2>/dev/null &");
 
 /**
  * Script finished
