@@ -131,6 +131,7 @@ $courses = get_courses();
 $studentRole = $DB->get_record('role', ['shortname' =>  'student']);
 $teacherRole = $DB->get_record('role', ['shortname' =>  'teacher']);
 $editingTeacherRole = $DB->get_record('role', ['shortname' =>  'editingteacher']);
+$package = shell_exec("connectboxmanage get package");
 foreach ($courses as $course) {
     $context = context_course::instance($course->id);
     $data = [
@@ -145,7 +146,8 @@ foreach ($courses as $course) {
         'siteadmin_name'	=>  get_config('local_chat_attachments', 'siteadmin_name'),
         'siteadmin_email'	=>  get_config('local_chat_attachments', 'siteadmin_email'),
         'siteadmin_phone'	=>  get_config('local_chat_attachments', 'siteadmin_phone'),
-        'siteadmin_country'	=>  get_config('local_chat_attachments', 'siteadmin_country'),        
+        'siteadmin_country'	=>  get_config('local_chat_attachments', 'siteadmin_country'),  
+        'package'			=>  $package      
     ];
     $students = get_role_users($studentRole->id, $context);
     foreach ($students as $student) {
