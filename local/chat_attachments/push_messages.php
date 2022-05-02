@@ -416,32 +416,17 @@ if (($curl->responseCode === 200) && (count($newMessages) === 0)) {
 
 /**
  * Send System Logs
- * Added by Derek Maxson 20210616
+ * Added by Derek Maxson 20210616 / Revised 20220427
  */
 $reporting->info('Preparing To Send Logs', 'sending_logs');
-$reporting->info('Sending Moodle Logs ' . $url . '/chathost/logs/moodle.', 'sending_logs');
-$yesterday = time() - (24*60*60);
-$query = 'select timecreated as timestamp, eventname as log from mdl_logstore_standard_log where timecreated > ? ORDER BY timecreated ASC';
-$result = $DB->get_records_sql($query, [$yesterday]);
-foreach ($result as $log) {
-	$logs[] = [
-		'timestamp' => $log->timestamp,
-		'log' => $log->log
-	];
-}
-echo json_encode($logs);
-$curl->makeRequest('/chathost/logs/moodle', 'POST', json_encode($logs) , null, true);
-echo $curl->responseCode;
-
-// Now get text file logs -- the server will normalize the timestamps (why can't there be just ONE datetime format in the world??!!)
-$output = shell_exec("cat /var/log/connectbox/captive_portal-access.log");
+$output = shell_exec("connectboxmanage get logs");
 $logs = explode("\n", $output);
 foreach ($logs as $log) {
 	$logs[] = [
 		'log' => $log
 	];
 }
-$curl->makeRequest('/chathost/logs/system', 'POST', json_encode($logs) , null, true);
+$curl->makeRequest('/chathost/logs/content', 'POST', json_encode($logs) , null, true);
 echo $curl->responseCode;
 $reporting->saveStep('sending_logs', 'completed');
 
