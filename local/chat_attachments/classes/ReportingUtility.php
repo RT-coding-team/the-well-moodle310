@@ -76,6 +76,8 @@ class ReportingUtility
         'steps'     =>  [
             'script'                        =>  'pending',
             'check_last_sync'               =>  'pending',
+            'sending_logs'                  =>  'pending',
+            'get_settings'                  =>  'pending',            
             'sending_roster'                =>  'pending',
             'sending_messages'              =>  'pending',
             'sending_attachments'           =>  'pending',

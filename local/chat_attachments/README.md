@@ -1,6 +1,13 @@
 # Chat Attachments
 
-A Moodle local plugin designed to work with a modified version of the mobile app.  It enables displaying images, video and files in a chat message.  See the repo for chathost APIs at https://github.com/RT-coding-team/chathost
+A Moodle local plugin designed to work with a modified version of the mobile app.  It provides phone home sync and enables Moodle messages displaying images, video and files in a chat message.  See the repo for chathost APIs at https://github.com/RT-coding-team/chathost
+
+Sync contains:
+- Log files 
+- Settings changes (from server to remote)
+- Courses and participant rosters
+- Chats and attachments from server
+- Chats and attachments to server
 
 ## File Server
 
@@ -98,14 +105,4 @@ php push_messages.php true <boolean:LOG_TO_FILE>
 The first true arguments tells the script that you are using the command line.  The second boolean indicates if you want to log to the JSON file (true) or to the terminal (false).
 
 ### Messaging Flow Between Moodle and Chathost
-* Moodle -> Chathost
-* POST /chathost/logs (Array of log objects) -> Returns 200
-* GET /chathost/settings -> Returns Array of settings objects
-* DELETE /chathost/settings/:id -> Returns 200
-* GET /chathost/messageStatus -> Returns timestamp of last successful sync (Chathost begins to compile pending messages)
-* POST /chathost/rosters (Array of course objects) -> Returns 200
-* GET /chathost/attachments/:id/exists -> Returns 200 or 404 (repeated for each attachment pending)
-* POST /chathost/attachments/ (One attachment multipart form) -> Returns 200
-* POST /chathost/messages (Array of message objects) -> Returns 200
-* (Sleep to allow Chathost to complete the tasks)
-* GET /chathost/messages/:synctime -> Returns array of message objects (synctime is from messageStatus API)
+<img src="https://www.websequencediagrams.com/cgi-bin/cdraw?lz=dGl0bGUgU3luYyBNb29kbGUgLyBDaGF0aG9zdCAocHVzaF9tZXNzYWdlcy5waHApIC0gUmV2aXNlZCAyMDIyMDIxNAoKClN0dWRlbnQtPldlbGwAQgY6IAAOByBzZW5kcyAAPwcgdG8gdGVhY2hlciBcbihPbmUAEQlwZXIgaXRlbTogdGV4dCwgYXR0YWNobWVudCkKVGhlV2VsbC0-SW50ZXJuZXQ6IExUQSB0ZXRoZXJzIAAYBwAdCkNoYXRIb3N0OiBDaGVjawCBSQpDb25uZWN0aXZpdHkgdG8gL2MAgWYHL2hlYWx0aAAqBT9ib3hpZD17AAIFfQoARQgtPgCBAAc6IFJlc3BvbmRzIGlmIGFibGUuAGEaQXV0aG9yaXphdGlvbiBLZXkAaQtjaGVjawBKFnBseSB3aXRoIDIwMCBvciA0MDEgKFVuYQBHB2VkAIIKCwCBZApTZW5kAINBCExvZ3MAgVULbG9ncy9tAINfBQBQIiwgNHh4IG9yIDV4eABPGVN5c3RlbQBTFXMAFgUAJkJSZXRyaWV2ZSBTZXR0aW5ncyBjaGFuZ2UAgU0McwAUBwCBKC4gLS0gcgCDQQVzZSBpcyBhbiBhcnJheSBvZiBvYmplY3RzCm5vdGUgb3ZlcgCEWQg6IFByb2Nlc3MgZWFjaCAAcwcsIHRoZW4AhWMFIGEgZGVsZXQAhUwKd2hlbiBjb21wbGV0ZQoKAIUPFEdFVCAvYXBpLwCGYwdTdGF0dXMvAIN5H3RpbWVzdGFtcCBvZiBsYXN0AIZaCXNlbnQgdG8gAIVTCACEOgUAgzIdUE9TAHwHY291cnNlUm9zdGVycy8gSlNPTiBvZiAAEQZzIGFuZCB1c2VycyBlbnJvbGxlZACEHS8AgkATAIh4BXdpdGhvdXQAiH0Id2lsbACCSwYAgQQSIHRvAIJmBmJveCBpbmZvAIMUFACEMAkAiU8HAIk9CCBzaW5jZQCCMgsAgXEeAIl0CC8gKACCBgUAhBoJAIoNCCkAhyYYaWVzAIcyCQCCVScAiWcKLzoAiXMKSUQgKG9uY2UgZm9yAIRxBgCKDwoAg2YFAId0FQCERBBzLzoAgXUFAIETHACIagUAg2oIAIInCgCLPwUAgicPAIQxIQCFSwkAgSIzdG8gcmVjZWl2ZQCLbgsAjE4MV3JpdGUAhn0GAIxMCwCNOQd1c2luZyBQSFAgTQCMbAdBUEkAJyEAcQ4AOhFGaWwAQgYAjVcKLT4AjW8HOiBBcHAgZGlzcGxheXMAjTYHaW1hZ2UsIHZpZGVvIG9yIGF1ZGlvIHBsYXllcgoK&s=default">

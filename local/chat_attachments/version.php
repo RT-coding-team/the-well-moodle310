@@ -11,8 +11,8 @@ $plugin->requires = 2010112400;
  * Our version number
  *
  */
-$plugin->version = 10041;
+$plugin->version = 10042;
 $plugin->component = 'local_chat_attachments';
 $plugin->cron = 0;
-$plugin->release = '1.0.41 (Build: 10041)';
+$plugin->release = '1.0.42 (Build: 10042)';
 $plugin->maturity = MATURITY_STABLE;

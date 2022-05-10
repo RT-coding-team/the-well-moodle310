@@ -57,8 +57,7 @@ if (!$cliScript) {
 }
 $url = get_config('local_chat_attachments', 'messaging_url');
 $token = get_config('local_chat_attachments', 'messaging_token');
-$output = shell_exec("cat /sys/class/net/eth0/address | tr ':' '-'");
-$boxId = substr($output, 0, -1);
+$boxId = shell_exec("cat /sys/class/net/eth0/address | tr ':' '-' | perl -pe 'chomp'");
 
 if ((!$boxId) || ($boxId === '')) {
     $reporting->error('Unable to retrieve the Box ID.', 'set_up');
@@ -67,11 +66,12 @@ if ((!$boxId) || ($boxId === '')) {
     exit;
 }
 if ($url === '') {
-	set_config('messaging_url', 'https://chat.thewellcloud.cloud', 'local_chat_attachments');
-    $reporting->info('No URL provided! Inserting https://chat.thewellcloud.cloud as default', $url );
+	$url = "https://chat.thewellcloud.cloud";
+	set_config('messaging_url', $url, 'local_chat_attachments');
+	$reporting->info('No URL provided! Inserting default', $url );
 }
 if ($token === '') {
-	$token = shell_exec("python -c 'import uuid; print(str(uuid.uuid4()))'");	
+	$token = shell_exec("python -c 'import uuid; print(str(uuid.uuid4()))' | perl -pe 'chomp'");	
 	set_config('messaging_token', $token, 'local_chat_attachments');
     $reporting->info('No Token provided! Inserting random as default', $token);
 }
@@ -80,7 +80,7 @@ $reporting->saveResult('url', $url);
 $reporting->saveResult('token', $token);
 
 // Check for active Internet connection to the world
-$output = shell_exec('curl -m 10 -sL -w "%{http_code}\\n" "' . $url . '/chathost/healthcheck" -o /dev/null');
+$output = shell_exec('curl -m 10 -sL -w "%{http_code}\\n" "' . $url . '/chathost/healthcheck?boxid=' . $boxId . '" -o /dev/null');
 $output = substr($output, 0, -1);
 if ($output != '200') {
 	$reporting->info('Chathost: ' . $url . ' is unavailable. Not able to sync. HTTP Code:', $output);
@@ -99,66 +99,10 @@ $fs = get_file_storage();
 $systemContext = context_system::instance();
 $storage = new FileStorageUtility($DB, $fs, $systemContext->id);
 
-/**
- * Send System Logs
- * Added by Derek Maxson 20210616
- */
-$reporting->info('Preparing To Get Logs', 'get_logs');
-$reporting->info('Sending Send System Logs ' . $url . 'logs/system.', 'get_settings');
-$yesterday = time() - (24*60*60);
-$query = 'select timecreated as timestamp, eventname as log from mdl_logstore_standard_log where timecreated > ? ORDER BY timecreated ASC';
-$result = $DB->get_records_sql($query, [$yesterday]);
-foreach ($result as $log) {
-	$logs[] = [
-		'timestamp' => $log->timestamp,
-		'log' => $log->log
-	];
-}
-$curl->makeRequest('/chathost/logs/moodle', 'POST', json_encode($logs) , null, true);
-echo $curl->responseCode;
-
-// Now get text file logs -- the server will normalize the timestamps (why can't there be just ONE datetime format in the world??!!)
-$output = shell_exec("cat /var/log/connectbox/captive_portal-access.log");
-$logs = explode("\n", $output);
-foreach ($logs as $log) {
-	$logs[] = [
-		'log' => $log
-	];
-}
-$curl->makeRequest('/chathost/logs/system', 'POST', json_encode($logs) , null, true);
-echo $curl->responseCode;
-
-/**
- * Retrieve Settings 
- * Added by Derek Maxson 20210616
- */
-$reporting->info('Preparing To Get Settings', 'get_settings');
-$reporting->info('Sending GET request to ' . $url . 'settings.', 'get_settings');
-$response = $curl->makeRequest('/chathost/settings', 'GET', [], null, true);
-$logMessage = 'The response code for ' . $url . '/chathost/settings was ' . $curl->responseCode . '.';
-if ($curl->responseCode === 200) {
-    $reporting->info($logMessage, 'get_settings');
-    $settings = json_decode($response);
-} else {
-    $reporting->error($logMessage, 'get_settings');
-    $reporting->saveStep('get_settings', 'errored');
-    $settings = [];
-}
-// Iterate through each setting and set, then delete the setting from the server
-$reporting->saveResult('get_settings', json_encode($settings, JSON_PRETTY_PRINT));
-foreach ($settings as $setting) {
-	$reporting->info('Executing Setting Change: ' . $setting->key . '=' . $setting->value, 'get_settings');
-	if ($setting->key === 'moodle-security-key') {
-		set_config('messaging_token', $setting->value, 'local_chat_attachments');
-		$reporting->info('DONE: Setting Change via Moodle: ' . $setting->key . '=' . $setting->value, 'get_settings');
-	}
-	else {
-		shell_exec("sudo /usr/local/connectbox/bin/ConnectBoxManage.sh set $setting->key $setting->value");
-		$reporting->info('DONE: Setting Change: ' . $setting->key . '=' . $setting->value, 'get_settings');
-	}
-	$curl->makeRequest('/chathost/settings/' . $setting->deleteId, 'DELETE', []);
-	$reporting->info('DONE: Delete Setting Change: ' . $setting->key . '=' . $setting->value, 'get_settings');
-}
+# Test Security
+$reporting->info('Checking Secuity Key');
+$securityCheck = $curl->makeRequest('/chathost/check', 'GET', [], null, true);
+$reporting->info('Chathost: Security Check says ' . $securityCheck);
 
 /**
  * Retrieve the last time we synced
@@ -246,7 +190,7 @@ foreach ($courses as $course) {
     $payload[] = $data;
 }
 // Site Administration Data -- Added DM 20210527
-echo json_encode($payload[0], JSON_PRETTY_PRINT);
+echo json_encode($payload, JSON_PRETTY_PRINT);
 //
 
 // $reporting->savePayload('course_rooster', $payload);
@@ -254,8 +198,8 @@ echo json_encode($payload[0], JSON_PRETTY_PRINT);
 /**
  * Send the course payload to the API
  */
-$reporting->info('Sending POST request to ' . $url . 'courseRosters.', 'sending_roster');
-$curl->makeRequest('/chathost/courseRosters', 'POST', json_encode($payload), null, true);
+$reporting->info('Sending POST request to ' . $url . '/chathost/courseRosters.', 'sending_roster');
+$curl->makeRequest('/chathost/courseRosters', 'POST', json_encode($payload) , null, true);
 $logMessage = 'The response code for ' . $url . '/chathost/courseRosters was ' . $curl->responseCode . '.';
 if ($curl->responseCode === 200) {
     $reporting->info($logMessage, 'sending_roster');
@@ -472,6 +416,60 @@ if (($curl->responseCode === 200) && (count($newMessages) === 0)) {
 }
 
 
+/**
+ * Send System Logs
+ * Added by Derek Maxson 20210616 / Revised 20220427
+ */
+$reporting->info('Preparing To Send Logs', 'sending_logs');
+$output = shell_exec("connectboxmanage get logs");
+$logs = explode("\n", $output);
+foreach ($logs as $log) {
+	$logs[] = [
+		'log' => $log
+	];
+}
+$curl->makeRequest('/chathost/logs/content', 'POST', json_encode($logs) , null, true);
+echo $curl->responseCode;
+$reporting->saveStep('sending_logs', 'completed');
+
+/**
+ * Retrieve Settings 
+ * Added by Derek Maxson 20210616
+ */
+$reporting->info('Preparing To Get Settings', 'get_settings');
+$reporting->info('Sending GET request to ' . $url . 'settings.', 'get_settings');
+$response = $curl->makeRequest('/chathost/settings', 'GET', [], null, true);
+$logMessage = 'The response code for ' . $url . '/chathost/settings was ' . $curl->responseCode . '.';
+if ($curl->responseCode === 200) {
+    $reporting->info($logMessage, 'get_settings');
+    $settings = json_decode($response);
+} else {
+    $reporting->error($logMessage, 'get_settings');
+    $reporting->saveStep('get_settings', 'errored');
+    $reporting->saveStep('script', 'errored');
+    $settings = [];
+}
+// Iterate through each setting and set, then delete the setting from the server
+$reporting->saveResult('get_settings', json_encode($settings, JSON_PRETTY_PRINT));
+foreach ($settings as $setting) {
+	$reporting->info('Executing Setting Change: ' . $setting->key . '=' . $setting->value, 'get_settings');
+	if ($setting->key === 'moodle-security-key') {
+		set_config('messaging_token', $setting->value, 'local_chat_attachments');
+		shell_exec("sudo connectboxmanage set securitykey $setting->value");
+		$reporting->info('DONE: Setting Change via Moodle: ' . $setting->key . '=' . $setting->value, 'get_settings');
+	}
+	else {
+		$output = shell_exec("sudo connectboxmanage set $setting->key $setting->value");
+		$reporting->info($output);
+		$reporting->info('DONE: Setting Change: ' . $setting->key . '=' . $setting->value, 'get_settings');
+	}
+	$curl->makeRequest('/chathost/settings/' . $setting->deleteId, 'DELETE', []);
+	$reporting->info('DONE: Delete Setting Change: ' . $setting->key . '=' . $setting->value, 'get_settings');
+}
+
+// Kick Off lazyLoader to sync any content subscriptions
+$reporting->info('Launch connectboxmanage do openwellrefresh in background to sync subscribed content', 'get_settings');
+shell_exec("sudo connectboxmanage do openwellrefresh >/dev/null 2>/dev/null &");
 
 /**
  * Script finished
