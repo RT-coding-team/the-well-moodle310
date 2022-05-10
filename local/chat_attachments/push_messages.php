@@ -71,7 +71,7 @@ if ($url === '') {
 	$reporting->info('No URL provided! Inserting default', $url );
 }
 if ($token === '') {
-	$token = shell_exec("python -c 'import uuid; print(str(uuid.uuid4()))' | perl -pe 'chomp'");	
+	$token = shell_exec("python -c 'import uuid; print(str(uuid.uuid4()))' | perl -pe 'chomp'");
 	set_config('messaging_token', $token, 'local_chat_attachments');
     $reporting->info('No Token provided! Inserting random as default', $token);
 }
@@ -132,6 +132,7 @@ $studentRole = $DB->get_record('role', ['shortname' =>  'student']);
 $teacherRole = $DB->get_record('role', ['shortname' =>  'teacher']);
 $editingTeacherRole = $DB->get_record('role', ['shortname' =>  'editingteacher']);
 $package = shell_exec("connectboxmanage get package");
+$packageStatus = shell_exec("connectboxmanage get packagestatus");
 foreach ($courses as $course) {
     $context = context_course::instance($course->id);
     $data = [
@@ -145,9 +146,10 @@ foreach ($courses as $course) {
         'sitename'			=>  get_config('local_chat_attachments', 'site_name'),
         'siteadmin_name'	=>  get_config('local_chat_attachments', 'siteadmin_name'),
         'siteadmin_email'	=>  get_config('local_chat_attachments', 'siteadmin_email'),
-        'siteadmin_phone'	=>  get_config('local_chat_attachments', 'siteadmin_phone'),
-        'siteadmin_country'	=>  get_config('local_chat_attachments', 'siteadmin_country'),  
-        'package'			=>  $package      
+        'siteadmin_phone'	=>  get_config('local_chat_attachments', 'siteadmin_phone')
+        'siteadmin_country'	=>  get_config('local_chat_attachments', 'siteadmin_country'),
+        'package'			=>  $package,
+        'packageStatus'     =>  $packageStatus
     ];
     $students = get_role_users($studentRole->id, $context);
     foreach ($students as $student) {
@@ -355,14 +357,14 @@ if (($curl->responseCode === 200) && (count($newMessages) === 0)) {
 				$message->sender->id,
 				$message->recipient->id
 			]
-		);  
+		);
 		if ($conversation->id > 0) {
 			$message->conversation_id = $conversation->id;
 		}
 		else {
 			die();
 		}
-// End modifications 
+// End modifications
         if (Attachment::isAttachment($content)) {
             $attachment = new Attachment($content);
             /**
@@ -431,7 +433,7 @@ echo $curl->responseCode;
 $reporting->saveStep('sending_logs', 'completed');
 
 /**
- * Retrieve Settings 
+ * Retrieve Settings
  * Added by Derek Maxson 20210616
  */
 $reporting->info('Preparing To Get Settings', 'get_settings');
