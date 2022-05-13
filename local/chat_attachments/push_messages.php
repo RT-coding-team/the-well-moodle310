@@ -421,7 +421,7 @@ if (($curl->responseCode === 200) && (count($newMessages) === 0)) {
  * Added by Derek Maxson 20210616 / Revised 20220427
  */
 $reporting->info('Preparing To Send Logs', 'sending_logs');
-$output = shell_exec("connectboxmanage get logs");
+$output = shell_exec("connectboxmanage get syncweblog");
 $logs = explode("\n", $output);
 foreach ($logs as $log) {
 	$logs[] = [
