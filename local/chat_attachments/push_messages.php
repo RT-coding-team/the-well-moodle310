@@ -42,6 +42,7 @@ require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPA
 require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'FailedMessagesUtility.php');
 require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'FileStorageUtility.php');
 require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'ReportingUtility.php');
+require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Settings.php');
 // Uncomment if you want to disable emailing along with sending chat messages
 //$CFG->noemailever = true;
 
@@ -55,8 +56,8 @@ $failedMessages = new FailedMessagesUtility(dirname(__FILE__));
 if (!$cliScript) {
     $reporting->printLineBreak = '<br>';
 }
-$url = get_config('local_chat_attachments', 'messaging_url');
-$token = get_config('local_chat_attachments', 'messaging_token');
+$url = Settings::get('server_url', '');
+$token = Settings::get('server_authorization', '');
 $boxId = shell_exec("cat /sys/class/net/eth0/address | tr ':' '-' | perl -pe 'chomp'");
 
 if ((!$boxId) || ($boxId === '')) {
@@ -143,11 +144,11 @@ foreach ($courses as $course) {
         'updated_on'	    =>  intval($course->timemodified),
         'students'      	=>  [],
         'teachers'  	    =>  [],
-        'sitename'			=>  get_config('local_chat_attachments', 'site_name'),
-        'siteadmin_name'	=>  get_config('local_chat_attachments', 'siteadmin_name'),
-        'siteadmin_email'	=>  get_config('local_chat_attachments', 'siteadmin_email'),
-        'siteadmin_phone'	=>  get_config('local_chat_attachments', 'siteadmin_phone')
-        'siteadmin_country'	=>  get_config('local_chat_attachments', 'siteadmin_country'),
+        'sitename'			=>  Settings::get('server_sitename', ''),
+        'siteadmin_name'	=>  Settings::get('server_siteadmin_name', ''),
+        'siteadmin_email'	=>  Settings::get('server_siteadmin_email', ''),
+        'siteadmin_phone'	=>  Settings::get('server_siteadmin_phone', ''),
+        'siteadmin_country'	=>  Settings::get('server_siteadmin_country', ''),
         'package'			=>  $package,
         'packageStatus'     =>  $packageStatus
     ];
