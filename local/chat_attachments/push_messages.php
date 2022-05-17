@@ -42,6 +42,7 @@ require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPA
 require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'FailedMessagesUtility.php');
 require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'FileStorageUtility.php');
 require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'ReportingUtility.php');
+require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Settings.php');
 // Uncomment if you want to disable emailing along with sending chat messages
 //$CFG->noemailever = true;
 
@@ -55,8 +56,8 @@ $failedMessages = new FailedMessagesUtility(dirname(__FILE__));
 if (!$cliScript) {
     $reporting->printLineBreak = '<br>';
 }
-$url = get_config('local_chat_attachments', 'messaging_url');
-$token = get_config('local_chat_attachments', 'messaging_token');
+$url = Settings::get('server_url', '');
+$token = Settings::get('server_authorization', '');
 $boxId = shell_exec("cat /sys/class/net/eth0/address | tr ':' '-' | perl -pe 'chomp'");
 
 if ((!$boxId) || ($boxId === '')) {
@@ -66,14 +67,12 @@ if ((!$boxId) || ($boxId === '')) {
     exit;
 }
 if ($url === '') {
-	$url = "https://chat.thewellcloud.cloud";
-	set_config('messaging_url', $url, 'local_chat_attachments');
-	$reporting->info('No URL provided! Inserting default', $url );
+	$reporting->error('No URL provided in the brand.txt file.', 'set_up');
+    exit;
 }
 if ($token === '') {
-	$token = shell_exec("python -c 'import uuid; print(str(uuid.uuid4()))' | perl -pe 'chomp'");
-	set_config('messaging_token', $token, 'local_chat_attachments');
-    $reporting->info('No Token provided! Inserting random as default', $token);
+	$reporting->error('No token provided in the brand.txt file.', 'set_up');
+    exit;
 }
 $reporting->saveResult('box_id', $boxId);
 $reporting->saveResult('url', $url);
@@ -143,11 +142,11 @@ foreach ($courses as $course) {
         'updated_on'	    =>  intval($course->timemodified),
         'students'      	=>  [],
         'teachers'  	    =>  [],
-        'sitename'			=>  get_config('local_chat_attachments', 'site_name'),
-        'siteadmin_name'	=>  get_config('local_chat_attachments', 'siteadmin_name'),
-        'siteadmin_email'	=>  get_config('local_chat_attachments', 'siteadmin_email'),
-        'siteadmin_phone'	=>  get_config('local_chat_attachments', 'siteadmin_phone')
-        'siteadmin_country'	=>  get_config('local_chat_attachments', 'siteadmin_country'),
+        'sitename'			=>  Settings::get('server_sitename', ''),
+        'siteadmin_name'	=>  Settings::get('server_siteadmin_name', ''),
+        'siteadmin_email'	=>  Settings::get('server_siteadmin_email', ''),
+        'siteadmin_phone'	=>  Settings::get('server_siteadmin_phone', ''),
+        'siteadmin_country'	=>  Settings::get('server_siteadmin_country', ''),
         'package'			=>  $package,
         'packageStatus'     =>  $packageStatus
     ];
@@ -454,7 +453,6 @@ $reporting->saveResult('get_settings', json_encode($settings, JSON_PRETTY_PRINT)
 foreach ($settings as $setting) {
 	$reporting->info('Executing Setting Change: ' . $setting->key . '=' . $setting->value, 'get_settings');
 	if ($setting->key === 'moodle-security-key') {
-		set_config('messaging_token', $setting->value, 'local_chat_attachments');
 		shell_exec("sudo connectboxmanage set securitykey $setting->value");
 		$reporting->info('DONE: Setting Change via Moodle: ' . $setting->key . '=' . $setting->value, 'get_settings');
 	}

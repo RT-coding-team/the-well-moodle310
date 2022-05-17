@@ -22,8 +22,9 @@ use PHPMailer\PHPMailer\Exception;
 require_once(dirname(dirname(dirname(__FILE__))) . DIRECTORY_SEPARATOR . 'config.php');
 require_once($CFG->libdir . DIRECTORY_SEPARATOR . 'phpmailer' . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'PHPMailer.php');
 require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'ReportingUtility.php');
+require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Settings.php');
 
-$email = get_config('local_chat_attachments', 'messaging_support_email');
+$email = Settings::get('server_siteadmin_email');
 $reporting = new ReportingUtility(dirname(__FILE__), false);
 $logFilePath = $reporting->getLogFilePath();
 $report = $reporting->read();
@@ -37,7 +38,7 @@ header('Content-type: application/json');
 if ((!$email) || ($email === '')) {
     echo json_encode([
         'success'   =>  false,
-        'reason'    =>  'You need to specify a support email in Chat Attachments.'
+        'reason'    =>  'You need to specify a support email on the box.'
     ]);
     exit();
 }
