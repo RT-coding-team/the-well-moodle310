@@ -67,14 +67,12 @@ if ((!$boxId) || ($boxId === '')) {
     exit;
 }
 if ($url === '') {
-	$url = "https://chat.thewellcloud.cloud";
-	set_config('messaging_url', $url, 'local_chat_attachments');
-	$reporting->info('No URL provided! Inserting default', $url );
+	$reporting->error('No URL provided in the brand.txt file.', 'set_up');
+    exit;
 }
 if ($token === '') {
-	$token = shell_exec("python -c 'import uuid; print(str(uuid.uuid4()))' | perl -pe 'chomp'");
-	set_config('messaging_token', $token, 'local_chat_attachments');
-    $reporting->info('No Token provided! Inserting random as default', $token);
+	$reporting->error('No token provided in the brand.txt file.', 'set_up');
+    exit;
 }
 $reporting->saveResult('box_id', $boxId);
 $reporting->saveResult('url', $url);
@@ -455,7 +453,6 @@ $reporting->saveResult('get_settings', json_encode($settings, JSON_PRETTY_PRINT)
 foreach ($settings as $setting) {
 	$reporting->info('Executing Setting Change: ' . $setting->key . '=' . $setting->value, 'get_settings');
 	if ($setting->key === 'moodle-security-key') {
-		set_config('messaging_token', $setting->value, 'local_chat_attachments');
 		shell_exec("sudo connectboxmanage set securitykey $setting->value");
 		$reporting->info('DONE: Setting Change via Moodle: ' . $setting->key . '=' . $setting->value, 'get_settings');
 	}
