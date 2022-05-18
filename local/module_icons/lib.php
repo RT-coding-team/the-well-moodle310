@@ -28,7 +28,7 @@ require_once(dirname(dirname(dirname(__FILE__))) . DIRECTORY_SEPARATOR . 'config
  * @param MoodleQuickForm $mform The actual form object (required to modify the form).
  */
 function local_module_icons_coursemodule_standard_elements($formwrapper, $mform) {
-    global $DB, $PAGE;
+    global $DB, $OUTPUT, $PAGE;
     $selected = 'moodle-system';
     $path = $PAGE->theme->dir . DIRECTORY_SEPARATOR . 'pix_core' . DIRECTORY_SEPARATOR . 'mi';
     if (!file_exists($path)) {
@@ -50,16 +50,18 @@ function local_module_icons_coursemodule_standard_elements($formwrapper, $mform)
         }
     }
     $icons = [
-        'moodle-system' =>  get_string('moodle_system', 'local_module_icons')
+        'moodle-system' =>  get_string('moodle-system', 'local_module_icons')
     ];
+    $data = [];
     foreach ($files as $file) {
-        $name = substr($file, 0, strrpos($file, '.'));
-        $name = str_replace('_', ' ', $name);
+        $filename = substr($file, 0, strrpos($file, '.'));
+        $name = str_replace('_', ' ', $filename);
         $icons[$file] = ucwords($name);
+        $data[$file] = strval($OUTPUT->pix_url('mi/' . $filename));
     }
     $mform->addElement('header', 'mod_handler_header', get_string('fieldheader', 'local_module_icons'));
     $mform->setExpanded('mod_handler_header', true);
-    $mform->addElement('select', 'icon_selector', get_string('icon-selector-text', 'local_module_icons'), $icons);
+    $mform->addElement('select', 'icon_selector', get_string('icon-selector-text', 'local_module_icons'), $icons, ['data-urls' => json_encode($data)]);
     $mform->setDefault('icon_selector', $selected);
 }
 
@@ -109,10 +111,21 @@ function local_module_icons_modify_coursemodule_info($coursemodule, $info) {
         'local_module_icons',
         ['course_id' => $coursemodule->course, 'course_module_id' => $coursemodule->id]
     );
-    if ($record) {
+    if ($record && ($record->icon !== 'moodle-system')) {
         $filename = substr($record->icon, 0, strrpos($record->icon, '.'));
         $info->icon = 'mi/' . $filename;
     }
 
     return $info;
+}
+/**
+ * Extend global navigation
+ *
+ * @param  global_navigation $nav   The global navigation
+ * @return void
+ * @link https://moodle.org/mod/forum/discuss.php?d=362880
+ */
+function local_module_icons_extend_navigation($nav) {
+    global $PAGE;
+    $PAGE->requires->js_call_amd('local_module_icons/module_icons', 'init');
 }
