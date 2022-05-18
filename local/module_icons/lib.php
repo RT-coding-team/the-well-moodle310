@@ -28,7 +28,8 @@ require_once(dirname(dirname(dirname(__FILE__))) . DIRECTORY_SEPARATOR . 'config
  * @param MoodleQuickForm $mform The actual form object (required to modify the form).
  */
 function local_module_icons_coursemodule_standard_elements($formwrapper, $mform) {
-    global $PAGE;
+    global $DB, $PAGE;
+    $selected = 'moodle-system';
     $path = $PAGE->theme->dir . DIRECTORY_SEPARATOR . 'pix_core' . DIRECTORY_SEPARATOR . 'mi';
     if (!file_exists($path)) {
         return;
@@ -37,7 +38,20 @@ function local_module_icons_coursemodule_standard_elements($formwrapper, $mform)
     if (empty($files)) {
         return;
     }
-    $icons = [];
+    $course = $formwrapper->get_course();
+    $module = $formwrapper->get_coursemodule();
+    if ($module) {
+        $record = $DB->get_record(
+            'local_module_icons',
+            ['course_id' => $course->id, 'course_module_id' => $module->id]
+        );
+        if ($record) {
+            $selected = $record->icon;
+        }
+    }
+    $icons = [
+        'moodle-system' =>  get_string('moodle_system', 'local_module_icons')
+    ];
     foreach ($files as $file) {
         $name = substr($file, 0, strrpos($file, '.'));
         $name = str_replace('_', ' ', $name);
@@ -46,6 +60,7 @@ function local_module_icons_coursemodule_standard_elements($formwrapper, $mform)
     $mform->addElement('header', 'mod_handler_header', get_string('fieldheader', 'local_module_icons'));
     $mform->setExpanded('mod_handler_header', true);
     $mform->addElement('select', 'icon_selector', get_string('icon-selector-text', 'local_module_icons'), $icons);
+    $mform->setDefault('icon_selector', $selected);
 }
 
 /**

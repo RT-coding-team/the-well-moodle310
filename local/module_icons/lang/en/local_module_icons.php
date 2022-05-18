@@ -22,3 +22,4 @@ defined('MOODLE_INTERNAL') || die();
 $string['pluginname'] = 'Module Specific Icons';
 $string['fieldheader'] = 'Module Icon';
 $string['icon-selector-text'] = 'Icon';
+$string['moodle-system'] = 'Moodle Default Icon';
