@@ -28,8 +28,15 @@ require_once(dirname(dirname(dirname(__FILE__))) . DIRECTORY_SEPARATOR . 'config
  * @param MoodleQuickForm $mform The actual form object (required to modify the form).
  */
 function local_module_icons_coursemodule_standard_elements($formwrapper, $mform) {
-    $path = dirname(__FILE__) .DIRECTORY_SEPARATOR . 'pix';
+    global $PAGE;
+    $path = $PAGE->theme->dir . DIRECTORY_SEPARATOR . 'pix_core' . DIRECTORY_SEPARATOR . 'mi';
+    if (!file_exists($path)) {
+        return;
+    }
     $files = array_diff(scandir($path), array('.', '..'));
+    if (empty($files)) {
+        return;
+    }
     $icons = [];
     foreach ($files as $file) {
         $name = substr($file, 0, strrpos($file, '.'));
@@ -49,6 +56,9 @@ function local_module_icons_coursemodule_standard_elements($formwrapper, $mform)
  */
 function local_module_icons_coursemodule_edit_post_actions($moduleinfo, $course) {
     global $DB;
+    if (!property_exists($moduleinfo, 'icon_selector')) {
+        return $moduleinfo;
+    }
     $courseId = $moduleinfo->course;
     $moduleId = $moduleinfo->coursemodule;
     $icon = $moduleinfo->icon_selector;
@@ -67,5 +77,27 @@ function local_module_icons_coursemodule_edit_post_actions($moduleinfo, $course)
     } else {
         $DB->insert_record('local_module_icons', $data, false);
     }
+    rebuild_course_cache($courseId);
+
     return $moduleinfo;
+}
+/**
+ * Modify the coursemodule info
+ *
+ * @param  object $coursemodule The course module details
+ * @param  object $info         The course module info to modify
+ * @return object               The modified module info
+ */
+function local_module_icons_modify_coursemodule_info($coursemodule, $info) {
+    global $DB;
+    $record = $DB->get_record(
+        'local_module_icons',
+        ['course_id' => $coursemodule->course, 'course_module_id' => $coursemodule->id]
+    );
+    if ($record) {
+        $filename = substr($record->icon, 0, strrpos($record->icon, '.'));
+        $info->icon = 'mi/' . $filename;
+    }
+
+    return $info;
 }
