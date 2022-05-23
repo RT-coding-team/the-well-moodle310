@@ -65,7 +65,7 @@ echo $OUTPUT->header();
             <div class="clearer"></div>
             <div id="admin-form_remote_url_field" class="form-item row">
                 <div class="form-label col-sm-3 text-sm-right">
-                    <label for="id_s_local_chat_attachments_messaging_support_email"><?php echo get_string('form_remote_url_field', 'local_restore_by_url'); ?></label>
+                    <label for="id_s_local_chat_attachments_local_restore_by_url"><?php echo get_string('form_remote_url_field', 'local_restore_by_url'); ?></label>
                     <span class="form-shortname d-block small text-muted">local_chat_attachments | form_remote_url_field</span>
                 </div>
                 <div class="form-setting col-sm-9">

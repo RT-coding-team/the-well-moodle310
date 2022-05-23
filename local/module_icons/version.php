@@ -12,8 +12,21 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-define('CLI_SCRIPT', true);
-require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Settings.php');
-$url = Settings::get('server_url', '');
-echo $url;
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+/**
+ * Our versioning file
+ */
+/**
+ * Required version of Moodle 3.7
+ *
+ */
+$plugin->requires = 2019052000;
+/**
+ * Our version number
+ *
+ */
+$plugin->version = 1000;
+$plugin->component = 'local_module_icons';
+$plugin->cron = 0;
+$plugin->release = '1.0.0 (Build: 10000)';
+$plugin->maturity = MATURITY_STABLE;

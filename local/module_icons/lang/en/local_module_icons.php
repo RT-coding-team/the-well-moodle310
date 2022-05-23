@@ -12,8 +12,14 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-define('CLI_SCRIPT', true);
-require_once(dirname(__FILE__) .DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Settings.php');
-$url = Settings::get('server_url', '');
-echo $url;
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
+/**
+ * Localization file
+ */
+defined('MOODLE_INTERNAL') || die();
+
+$string['pluginname'] = 'Module Specific Icons';
+$string['fieldheader'] = 'Module Icon';
+$string['icon-selector-text'] = 'Icon';
+$string['moodle-system'] = 'Moodle Default Icon';
