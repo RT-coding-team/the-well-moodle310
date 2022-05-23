@@ -1429,7 +1429,6 @@ class search_manager_testcase extends advanced_testcase {
     public function parse_search_area_id_data_provider() {
         return [
             ['mod_book-chapter', ['mod_book', 'search_chapter']],
-            ['mod_customcert-activity', ['mod_customcert', 'search_activity']],
             ['core_course-mycourse', ['core_search', 'core_course_mycourse']],
         ];
     }
