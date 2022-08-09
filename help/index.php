@@ -2,10 +2,10 @@
 
 <html  dir="ltr" lang="en" xml:lang="en">
 <head>
-    <title>Error</title>
+    <title>Help</title>
     <link rel="shortcut icon" href="/theme/image.php/boost/theme/1622672468/favicon" />
     <link rel="manifest" href="/admin/tool/mobile/mobile.webmanifest.php" /><meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="keywords" content="moodle, Error" />
+<meta name="keywords" content="moodle, help" />
 <link rel="stylesheet" type="text/css" href="/theme/yui_combo.php?rollup/3.17.2/yui-moodlesimple-min.css" /><script id="firstthemesheet" type="text/css">/** Required in order to fix style inclusion problems in IE with YUI **/</script><link rel="stylesheet" type="text/css" href="/theme/styles.php/boost/1622672468_1/all" />
 <script>
 //<![CDATA[
@@ -21,6 +21,11 @@ M.yui.loader = {modules: {}};
 </script>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style media="screen">
+        #page {
+            margin-top: 0px !important;
+        }
+    </style>
 </head>
 <body  id="page-thewell-index" class="format-site  path-thewell chrome dir-ltr lang-en yui-skin-sam yui3-skin-sam learn-dev-staging-derekmaxson-com pagelayout-base course-1 context-1 notloggedin ">
 <div class="toast-wrapper mx-auto py-0 fixed-top" role="status" aria-live="polite"></div>
@@ -37,63 +42,6 @@ M.yui.loader = {modules: {}};
 document.body.className += ' jsenabled';
 //]]>
 </script>
-
-
-
-    <nav class="fixed-top navbar navbar-light bg-white navbar-expand moodle-has-zindex" aria-label="Site navigation">
-    
-            <div data-region="drawer-toggle" class="d-inline-block mr-3">
-                <button aria-expanded="false" aria-controls="nav-drawer" type="button" class="btn nav-link float-sm-left mr-1 btn-light bg-gray" data-action="toggle-drawer" data-side="left" data-preference="drawer-open-nav"><i class="icon fa fa-bars fa-fw " aria-hidden="true"  ></i><span class="sr-only">Side panel</span></button>
-            </div>
-    
-            <a href="" class="navbar-brand aabtn has-logo
-                    ">
-                    <span class="logo d-none d-sm-inline">
-                        <img src="/pluginfile.php/1/core_admin/logocompact/300x300/1622672468/Droplet%20-%20Teal%20-%20Transparent.png" alt="The Well">
-                    </span>
-                <span class="site-name d-none d-md-inline">The Well</span>
-            </a>
-    
-            <ul class="navbar-nav d-none d-md-flex">
-                <!-- custom_menu -->
-                
-                <!-- page_heading_menu -->
-                
-            </ul>
-            <div class="ml-auto">
-                
-            </div>
-            <ul class="nav navbar-nav usernav">
-                <!-- navbar_plugin_output -->
-                <li class="nav-item">
-                    
-                </li>
-                <!-- user_menu -->
-                <li class="nav-item align-items-center pl-2">
-                    <div class="usermenu"><span class="login">You are not logged in. (<a href="/login/index.php">Log in</a>)</span></div>
-                </li>
-            </ul>
-            <!-- search_box -->
-    </nav>
-    <div id="nav-drawer" data-region="drawer" class="d-print-none moodle-has-zindex closed" aria-hidden="true" tabindex="-1">
-        <nav class="list-group" aria-label="Site">
-            <ul>
-                    <li>
-                        <a class="list-group-item list-group-item-action  " href="/" data-key="home" data-isexpandable="0" data-indent="0" data-showdivider="0" data-type="1" data-nodetype="1" data-collapse="0" data-forceopen="1" data-isactive="0" data-hidden="0" data-preceedwithhr="0" >
-                            <div class="ml-0">
-                                <div class="media">
-                                        <span class="media-left">
-                                            <i class="icon fa fa-home fa-fw " aria-hidden="true"  ></i>
-                                        </span>
-                                    <span class="media-body ">Home</span>
-                                </div>
-                            </div>
-                        </a>
-                    </li>
-            </ul>
-        </nav>
-    </div>
-
     <div id="page" class="container-fluid d-print-block">
         <header id="page-header" class="row">
     <div class="col-12 pt-3 pb-3">
@@ -114,10 +62,10 @@ document.body.className += ' jsenabled';
 </nav>
                     </div>
                     <div class="ml-auto d-flex">
-                        
+
                     </div>
                     <div id="course-header">
-                        
+
                     </div>
                 </div>
             </div>
@@ -133,14 +81,14 @@ document.body.className += ' jsenabled';
 
 
 </div></div>
-                    
-                    
+
+
 
                 </section>
             </div>
         </div>
     </div>
-    
+
     <div id="goto-top-link">
         <a class="btn btn-light" role="button" href="#">
             <i class="icon fa fa-arrow-up fa-fw "  title="Go to top" aria-label="Go to top"></i>
@@ -149,8 +97,8 @@ document.body.className += ' jsenabled';
     <footer id="page-footer" class="py-3 bg-dark text-light">
         <div class="container">
             <div id="course-footer"></div>
-    
-    
+
+
             <div class="logininfo">You are not logged in. (<a href="/login/index.php">Log in</a>)</div>
             <div class="tool_usertours-resettourcontainer"></div>
             <div class="homelink"><a href="/">Home</a></div>
@@ -238,4 +186,4 @@ M.util.help_popups.setup(Y);
 </div>
 
 </body>
-</html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+</html>
