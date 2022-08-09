@@ -2,6 +2,11 @@
 
 This is the Moodle branch to be deployed for The Well or Raspberry Pi but can also run on AWS, Azure or a server.
 
+# Default Database and Filestore
+* Default database that is loaded with the installation of Connectbox is stored here: https://github.com/ConnectBox/connectbox-pi/blob/master/ansible/roles/ansible-postgresql/templates/moodle_database_template.dump
+* Default filestore that is loaded with the installation of Connectbox is stored here: https://github.com/ConnectBox/connectbox-pi/blob/master/ansible/roles/moodle/templates/filedir.tar.gz
+* Loom video for how to update the database and filestore in Ansible for new builds: https://www.loom.com/share/826e5d11101d4f35ae12ea467e7c08b3
+
 # Key Modifications  
 
 # Moodle User Accounts
