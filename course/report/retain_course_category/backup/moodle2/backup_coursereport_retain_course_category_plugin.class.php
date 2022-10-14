@@ -19,6 +19,15 @@ class backup_coursereport_retain_course_category_plugin extends backup_courserep
     /**
      * Set up the structure for XML data. Example of the result stored in course/course.xml:
      *
+     * <plugin_coursereport_retain_course_category_course>
+     *     <course_category>
+     *      <path>/7/8/9</path>
+     *   </course_category>
+     *   <categories>
+     *      <data>A JSON object encoded and wrapped in CDATA tag</data>
+     *    </categories>
+     *  </plugin_coursereport_retain_course_category_course>
+     *
      * @return object   The plugin element
      */
     protected function define_course_plugin_structure() {
