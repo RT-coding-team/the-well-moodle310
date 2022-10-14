@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-class backup_coursereport_retain_course_category_plugin  extends backup_coursereport_plugin {
+class backup_coursereport_retain_course_category_plugin extends backup_coursereport_plugin {
 
     /**
      * Set up the structure for XML data. Example of the result stored in course/course.xml:
