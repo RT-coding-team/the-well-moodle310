@@ -18,63 +18,28 @@ class backup_coursereport_retain_course_category_plugin extends backup_courserep
 
     /**
      * Set up the structure for XML data. Example of the result stored in course/course.xml:
-     * 
-     * <plugin_coursereport_retain_course_category_course>
-     *     <course_details>
-     *       <id>10</id>
-     *       <course_category>
-     *         <path>/2/3</path>
-     *       </course_category>
-     *     </course_details>
-     *     <categories>
-     *       <single_category>
-     *         <id>2</id>
-     *         <name>Plants</name>
-     *         <description>&lt;p dir="ltr" style="text-align: left;"&gt;Plant Anatomy&lt;br&gt;&lt;/p&gt;</description>
-     *         <descriptionformat>1</descriptionformat>
-     *         <parent>0</parent>
-     *         <path>/2</path>
-     *         <depth>1</depth>
-     *       </single_category>
-     *       <single_category>
-     *         <id>1</id>
-     *         <name>Miscellaneous</name>
-     *         <description>$@NULL@$</description>
-     *         <descriptionformat>0</descriptionformat>
-     *         <parent>0</parent>
-     *         <path>/1</path>
-     *         <depth>1</depth>
-     *       </single_category>
-     *       <single_category>
-     *         <id>3</id>
-     *         <name>Vines</name>
-     *         <description>&lt;p dir="ltr" style="text-align: left;"&gt;Vineology&lt;br&gt;&lt;/p&gt;</description>
-     *         <descriptionformat>1</descriptionformat>
-     *         <parent>2</parent>
-     *         <path>/2/3</path>
-     *         <depth>2</depth>
-     *       </single_category>
-     *     </categories>
-     *   </plugin_coursereport_retain_course_category_course>
+     *
+     * @return object   The plugin element
      */
     protected function define_course_plugin_structure() {
+        global $DB;
         $plugin = $this->get_plugin_element();
         $wrapper = new backup_nested_element($this->get_recommended_name());
         $plugin->add_child($wrapper);
-        $course = new backup_nested_element('course_details', null, ['id']);
-        $wrapper->add_child($course);
         $categoryPath = new backup_nested_element('course_category', null, ['path']);
-        $course->set_source_table('course', array('id' => backup::VAR_COURSEID));
         $categoryPath->set_source_sql('SELECT c.category, cc.path
                                     FROM {course} c
                                     JOIN {course_categories} cc ON c.category = cc.id
                                     WHERE c.id = ?', array(backup::VAR_COURSEID));
-        $course->add_child($categoryPath);
-        $categories = new backup_nested_element('categories');
-        $children = new backup_nested_element('single_category', null, ['id', 'name', 'description', 'descriptionformat', 'parent', 'path', 'depth']);
-        $wrapper->add_child($categories);
-        $categories->add_child($children);
-        $children->set_source_table('course_categories', array());
+        $wrapper->add_child($categoryPath);
+        
+        $categoryData = new backup_nested_element('categories', null, ['data']);
+        $categories = $DB->get_records('course_categories');
+        $data = array((object)array(
+            'data'  =>  '//<![CDATA[' . json_encode($categories)  . '//]]>'
+        ));
+        $categoryData->set_source_array($data);
+        $wrapper->add_child($categoryData);
         return $plugin;
     }
 
