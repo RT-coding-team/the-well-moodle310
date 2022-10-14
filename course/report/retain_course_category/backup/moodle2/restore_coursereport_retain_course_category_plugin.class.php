@@ -111,8 +111,16 @@ class restore_coursereport_retain_course_category_plugin extends restore_courser
             $exist = $DB->get_record('course_categories', ['name' => $found->name, 'parent' => $parentId]);
             if (!$exist) {
                 // If it doesn't exist add it
-                // set the courses category to the new id
-                echo $parentId . ' -- ' . $newCategoryId;
+                $new = new stdClass();
+                $new->name = $found->name;
+                $new->description = $found->description;
+                $new->descriptionformat = $found->descriptionformat;
+                $new->visible = 0;
+                $new->parent = $parentId;
+                $new->idnumber = null;
+                $new = core_course_category::create($new);
+                $parentId = $new->id;
+                $newCategoryId = $new->id;
             } else {
                 // set the courses category to the new id
                 $parentId = $exist->id;
