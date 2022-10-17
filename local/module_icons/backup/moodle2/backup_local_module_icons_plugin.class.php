@@ -38,11 +38,11 @@ class backup_local_module_icons_plugin extends backup_local_plugin {
     protected function define_module_plugin_structure() {
 
         $plugin = $this->get_plugin_element();
-        $pluginwrapper = new backup_nested_element($this->get_recommended_name(), [], ['course_id', 'course_module_id', 'icon']);
-        $plugin->add_child($pluginwrapper);
+        $wrapper = new backup_nested_element($this->get_recommended_name(), [], ['course_id', 'course_module_id', 'icon']);
+        $plugin->add_child($wrapper);
 
-        $pluginwrapper->set_source_sql(
-            'SELECT * FROM {local_module_icons} WHERE course_id=:ci OR course_module_id=:cmi',
+        $wrapper->set_source_sql(
+            'SELECT * FROM {local_module_icons} WHERE course_id=:ci AND course_module_id=:cmi',
             array('ci' => backup::VAR_COURSEID, 'cmi' => backup::VAR_MODID)
         );
 
