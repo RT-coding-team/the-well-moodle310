@@ -14,11 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+defined('MOODLE_INTERNAL') || die();
+
 /**
+ * Restore the course categories
+ * 
  * NOTE: Since Moodle fires the process_ methods at random times, we wait until we have all
  * data ($categoryPath, $categories) before we process it.
  */
-class restore_coursereport_retain_course_category_plugin extends restore_coursereport_plugin {
+class restore_local_retain_categories_plugin extends restore_local_plugin {
+        
     /**
      * The found category path for the course
      */
@@ -47,7 +52,6 @@ class restore_coursereport_retain_course_category_plugin extends restore_courser
         return $paths;
     }
 
-    
     /**
      * Process retrieved categories. This is a JSON object that we parse and set to a class property to
      * be used later.
@@ -64,7 +68,6 @@ class restore_coursereport_retain_course_category_plugin extends restore_courser
             $this->setUpCategories();
         }
     }
-
         
     /**
      * Process the category path

@@ -19,4 +19,4 @@
  */
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Retain Course Category';
+$string['pluginname'] = 'Retain Categories';

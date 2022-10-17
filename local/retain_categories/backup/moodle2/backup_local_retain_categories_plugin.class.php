@@ -14,8 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-class backup_coursereport_retain_course_category_plugin extends backup_coursereport_plugin {
+defined('MOODLE_INTERNAL') || die();
 
+/**
+ * Backup the course cateogires
+ */
+class backup_local_retain_categories_plugin extends backup_local_plugin {
+
+    /**
+     * Define (add) particular settings this activity can have
+     */
+    protected function define_my_settings() {
+        // No particular settings for this activity
+    }
+     
     /**
      * Set up the structure for XML data. Example of the result stored in course/course.xml:
      *
