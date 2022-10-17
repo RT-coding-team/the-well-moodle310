@@ -14,14 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * @package    local_enemyquestions
- * @version    1.0
- * @copyright  &copy; 2015 Ray Morris <ray.morris@teex.tamu.edu>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
-
 defined('MOODLE_INTERNAL') || die();
 
 /**
@@ -60,5 +52,5 @@ class restore_local_module_icons_plugin extends restore_local_plugin {
             [$this->task->get_courseid(), $this->task->get_moduleid(), $data->icon]
         );
     }
-    
+
 }
