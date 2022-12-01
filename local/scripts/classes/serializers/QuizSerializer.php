@@ -94,6 +94,7 @@ class QuizSerializer
         );
         foreach ($attempts as $attempt) {
             $results[] = [
+                'user_id'       =>  $attempt->userid,
                 'firstname'     =>  $attempt->firstname,
                 'lastname'      =>  $attempt->lastname,
                 'duration'      =>  $attempt->duration,
