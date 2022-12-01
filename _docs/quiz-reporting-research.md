@@ -3,6 +3,16 @@
 Detail research on how the stats are generated for Moodle's Quiz mod.  The form does a GET request and reloads the page.
 
 - [Question Engine Details](https://docs.moodle.org/dev/Overview_of_the_Moodle_question_engine#Detailed_data_about_an_attempt).
+- [Question Database Structure](https://docs.moodle.org/dev/Question_database_structure).
+- [Quiz Database Structure](https://docs.moodle.org/dev/Quiz_database_structure).
+
+I was able to find the Query by following these steps:
+
+1. Open the report.php where the download is triggered.
+2. Locate the function call `$table->out`.
+3. Right before it, type `print_r($table->sql);` and refresh the page.
+
+This is how you find the parts of the query that is being fired.
 
 ## URL Parameters
 
