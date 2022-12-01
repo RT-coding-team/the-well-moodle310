@@ -18,12 +18,7 @@
  *
  * If you want to use on command line, use `php sync.php true 'PASSWORD'`. Use single quotes on the password to allow special characters.
  */
-$cliScript = false;
-if ((isset($argv)) && (isset($argv[1]))) {
-    $cliScript = boolval($argv[1]);
-}
-
-define('CLI_SCRIPT', $cliScript);
+define('CLI_SCRIPT', true);
 
 set_time_limit(0);
 
