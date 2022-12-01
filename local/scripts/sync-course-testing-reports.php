@@ -30,6 +30,7 @@ set_time_limit(0);
 require_once(dirname(dirname(dirname(__FILE__))) . DIRECTORY_SEPARATOR . 'config.php');
 require_once(dirname(dirname(dirname(__FILE__))) . DIRECTORY_SEPARATOR . 'course' . DIRECTORY_SEPARATOR . 'lib.php');
 require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'serializers' . DIRECTORY_SEPARATOR . 'QuizSerializer.php');
+require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'serializers' . DIRECTORY_SEPARATOR . 'SurveySerializer.php');
 
 $courses = get_courses();
 $approvedActivities = ['choice', 'quiz', 'feedback', 'survey'];
@@ -52,6 +53,7 @@ foreach ($courses as $course) {
         if (!in_array($activity->mod, $approvedActivities)) {
             continue;
         }
+        $serializer = null;
         $activityDetails = [];
         if ($activity->mod === 'quiz') {
             $serializer = new QuizSerializer($activity->id, $DB);
@@ -61,21 +63,11 @@ foreach ($courses as $course) {
             }
         }
         if ($activity->mod === 'survey') {
-            $survey = $DB->get_record('survey', ['id'   =>  $activity->id]);
-            if (!$survey) {
-                continue;
+            $serializer = new SurveySerializer($activity->id, $DB);
+            $activityDetails = $serializer->details();
+            if (!empty($activityDetails)) {
+                $activityDetails['results'] = $serializer->results($course->id, $activity->cm);
             }
-            // $activityDetails = [
-            //     'id'            =>  $survey->id,
-            //     'type'          =>  'survey',
-            //     'name'          =>  $survey->name,
-            //     'intro'         =>  strip_tags($survey->intro),
-            //     'created_on'    =>  $survey->timecreated,
-            //     'modified_on'   =>  $survey->timemodified,
-            //     'results'       =>  []
-            // ];
-            // $order = explode(',', $survey->questions);
-            // $questions = $DB->get_records_list('survey_questions', 'id', $order);
         }
         if (!empty($activityDetails)) {
             $tests[] = [
