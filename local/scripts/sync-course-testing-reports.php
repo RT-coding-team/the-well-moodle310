@@ -96,6 +96,24 @@ foreach ($courses as $course) {
                 ];
             }
         }
+        if ($activity->mod === 'survey') {
+            $survey = $DB->get_record('survey', ['id'   =>  $activity->id]);
+            if (!$survey) {
+                continue;
+            }
+            $activityDetails = [
+                'id'            =>  $survey->id,
+                'type'          =>  'survey',
+                'name'          =>  $survey->name,
+                'intro'         =>  strip_tags($survey->intro),
+                'created_on'    =>  $survey->timecreated,
+                'modified_on'   =>  $survey->timemodified,
+                'results'       =>  []
+            ];
+            $order = explode(',', $survey->questions);
+            $questions = $DB->get_records_list('survey_questions', 'id', $order);
+            print_r($questions);
+        }
         if ($activityDetails) {
             $tests[] = [
                 'course'    =>  $courseDetails,
@@ -104,4 +122,4 @@ foreach ($courses as $course) {
         }
     }
 }
-print_r($tests);
+// print_r($tests);
