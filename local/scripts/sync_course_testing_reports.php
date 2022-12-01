@@ -16,7 +16,7 @@
 /**
  * Sync the current course tests and quiz reports with the cloud.
  *
- * If you want to use on command line, use `php sync.php true 'PASSWORD'`. Use single quotes on the password to allow special characters.
+ * If you want to use on command line, use `php sync_course_testing_reports.php`.
  */
 define('CLI_SCRIPT', true);
 
