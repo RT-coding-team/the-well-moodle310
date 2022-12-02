@@ -60,8 +60,7 @@ class SurveySerializer
             'name'          =>  $this->survey->name,
             'intro'         =>  strip_tags($this->survey->intro),
             'created_on'    =>  $this->survey->timecreated,
-            'modified_on'   =>  $this->survey->timemodified,
-            'results'       =>  []
+            'modified_on'   =>  $this->survey->timemodified
         ];
     }
 
