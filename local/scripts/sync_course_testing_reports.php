@@ -24,11 +24,12 @@ set_time_limit(0);
 
 require_once(dirname(dirname(dirname(__FILE__))) . DIRECTORY_SEPARATOR . 'config.php');
 require_once(dirname(dirname(dirname(__FILE__))) . DIRECTORY_SEPARATOR . 'course' . DIRECTORY_SEPARATOR . 'lib.php');
+require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'serializers' . DIRECTORY_SEPARATOR . 'AssignmentSerializer.php');
 require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'serializers' . DIRECTORY_SEPARATOR . 'QuizSerializer.php');
 require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'serializers' . DIRECTORY_SEPARATOR . 'SurveySerializer.php');
 
 $courses = get_courses();
-$approvedActivities = ['choice', 'quiz', 'feedback', 'survey'];
+$approvedActivities = ['assign', 'quiz', 'survey'];
 
 $tests = [];
 foreach ($courses as $course) {
@@ -64,6 +65,13 @@ foreach ($courses as $course) {
                 $activityDetails['results'] = $serializer->results($course->id, $activity->cm);
             }
         }
+        if ($activity->mod === 'assign') {
+            $serializer = new AssignmentSerializer($activity->id, $DB);
+            $activityDetails = $serializer->details();
+            if (!empty($activityDetails)) {
+                $activityDetails['results'] = $serializer->results($course->id, $activity->cm);
+            }
+        }
         if (!empty($activityDetails)) {
             $tests[] = [
                 'course'    =>  $courseDetails,
@@ -72,4 +80,4 @@ foreach ($courses as $course) {
         }
     }
 }
-print_r($tests);
+//print_r($tests);
