@@ -76,11 +76,7 @@ class SurveySerializer
         if (!$answers) {
             return [];
         }
-        $module = get_coursemodule_from_id('survey', $courseModuleId);
-        if (!$module) {
-            throw new Exception('The course module is missing for survey ' . $this->survey->id . '!');
-        }
-        $context = context_module::instance($module->id);
+        $context = context_module::instance($courseModuleId);
         $users = get_users_by_capability($context, 'mod/survey:participate', '', '', '', '', '', null, false);
         /**
          * The questions is a comma seperated array of ids in the correct order.
