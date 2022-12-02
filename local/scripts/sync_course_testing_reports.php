@@ -31,7 +31,9 @@ require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEP
 $courses = get_courses();
 $approvedActivities = ['assign', 'quiz', 'survey'];
 
-$tests = [];
+$assignments = [];
+$quizes = [];
+$surveys = [];
 foreach ($courses as $course) {
     if (intval($course->id) === 1) {
         continue;
@@ -50,22 +52,19 @@ foreach ($courses as $course) {
             continue;
         }
         $serializer = null;
-        $activityDetails = [];
         if ($activity->mod === 'quiz') {
             $serializer = new QuizSerializer($activity->id, $DB);
             $activityDetails = $serializer->details();
             if (!empty($activityDetails)) {
                 $activityDetails['results'] = $serializer->results($course->id);
             }
-        }
-        if ($activity->mod === 'survey') {
+        } else if ($activity->mod === 'survey') {
             $serializer = new SurveySerializer($activity->id, $DB);
             $activityDetails = $serializer->details();
             if (!empty($activityDetails)) {
                 $activityDetails['results'] = $serializer->results($course->id, $activity->cm);
             }
-        }
-        if ($activity->mod === 'assign') {
+        } else if ($activity->mod === 'assign') {
             $serializer = new AssignmentSerializer($activity->id, $DB);
             $activityDetails = $serializer->details();
             if (!empty($activityDetails)) {
@@ -73,11 +72,23 @@ foreach ($courses as $course) {
             }
         }
         if (!empty($activityDetails)) {
-            $tests[] = [
+            $data = [
                 'course'    =>  $courseDetails,
                 'activity'  =>  $activityDetails
             ];
+            if ($activity->mod === 'quiz') {
+                $quizes[] = $data;
+            } else if ($activity->mod === 'survey') {
+                $surveys[] = $data;
+            } else if ($activity->mod === 'assign') {
+                $assignments[] = $data;
+            }
         }
     }
 }
-//print_r($tests);
+echo "ASSIGNMENTS:\r\n";
+print_r(json_encode($assignments, JSON_NUMERIC_CHECK));
+echo "\r\nQUIZES:\r\n";
+print_r(json_encode($quizes, JSON_NUMERIC_CHECK));
+echo "\r\nSURVEYS:\r\n";
+print_r(json_encode($surveys, JSON_NUMERIC_CHECK));
