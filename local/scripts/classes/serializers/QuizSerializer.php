@@ -18,7 +18,7 @@ require_once(dirname(dirname(dirname(dirname(dirname(__FILE__))))) . DIRECTORY_S
 /**
  * Retrieves quiz data from the database and returns as a PHP array.
  */
-class QuizSerializer 
+class QuizSerializer
 {
     /**
      * An instance of Moodle's database
@@ -28,18 +28,17 @@ class QuizSerializer
      * The query to get the results
      */
     protected $query = "SELECT DISTINCT '' || u.id || '#' || COALESCE(quiza.attempt, 0) AS uniqueid, " . 
-    "(CASE WHEN (quiza.state = 'finished' AND NOT EXISTS ( SELECT 1 FROM {quiz_attempts} qa2 " .
-    "WHERE qa2.quiz = quiza.quiz AND qa2.userid = quiza.userid AND qa2.state = 'finished' AND " .
-    "( COALESCE(qa2.sumgrades, 0) > COALESCE(quiza.sumgrades, 0) OR (COALESCE(qa2.sumgrades, 0) = COALESCE(quiza.sumgrades, 0) " .
-    "AND qa2.attempt < quiza.attempt) ))) THEN 1 ELSE 0 END) AS gradedattempt, quiza.uniqueid AS usageid, quiza.id AS attempt, " .
-    "u.id AS userid, u.idnumber, u.firstnamephonetic,u.lastnamephonetic,u.middlename,u.alternatename,u.firstname,u.lastname, " .
-    "u.institution, u.department, u.email, quiza.state, quiza.sumgrades, quiza.timefinish, quiza.timestart, CASE WHEN quiza.timefinish = 0 " .
-    "THEN null WHEN quiza.timefinish > quiza.timestart THEN quiza.timefinish - quiza.timestart ELSE 0 END AS duration, " .
-    "COALESCE(( SELECT MAX(qqr.regraded) FROM {quiz_overview_regrades} qqr WHERE qqr.questionusageid = quiza.uniqueid ), -1) " .
-    "AS regraded FROM {user} u LEFT JOIN {quiz_attempts} quiza ON quiza.userid = u.id AND quiza.quiz = :quizid JOIN {user_enrolments} " .
-    "ej1_ue ON ej1_ue.userid = u.id JOIN {enrol} ej1_e ON (ej1_e.id = ej1_ue.enrolid AND ej1_e.courseid = :courseid) JOIN " .
-    "(SELECT DISTINCT userid FROM {role_assignments} WHERE contextid IN (1,565,717,738) AND roleid IN (5) ) ra ON ra.userid = u.id " .
-    "WHERE quiza.preview = 0 AND quiza.id IS NOT NULL AND u.deleted = 0 AND u.id <> 1 AND u.deleted = 0";
+    "(CASE WHEN (quiza.state = 'finished' AND NOT EXISTS ( SELECT 1 FROM {quiz_attempts} qa2 WHERE qa2.quiz = quiza.quiz " .
+    "AND qa2.userid = quiza.userid AND qa2.state = 'finished' AND ( COALESCE(qa2.sumgrades, 0) > COALESCE(quiza.sumgrades, 0) " .
+    "OR (COALESCE(qa2.sumgrades, 0) = COALESCE(quiza.sumgrades, 0) AND qa2.attempt < quiza.attempt) ))) THEN 1 ELSE 0 END) AS " .
+    "gradedattempt, quiza.uniqueid AS usageid, quiza.id AS attempt, u.id AS userid, u.idnumber, u.firstname, u.lastname, " .
+    "quiza.state, quiza.sumgrades, quiza.timefinish, quiza.timestart, CASE WHEN quiza.timefinish = 0 " .
+    "THEN null WHEN quiza.timefinish > quiza.timestart THEN quiza.timefinish - quiza.timestart ELSE 0 END AS duration " .
+    "FROM {user} u LEFT JOIN {quiz_attempts} quiza ON quiza.userid = u.id AND quiza.quiz = :quizid JOIN {user_enrolments} " .
+    "uenroll ON uenroll.userid = u.id JOIN {enrol} enrol ON (enrol.id = uenroll.enrolid AND enrol.courseid = :courseid) JOIN " .
+    "(SELECT DISTINCT userid FROM {role_assignments} as dra JOIN {context} dcon ON dra.contextid = dcon.id WHERE dcon.contextlevel " .
+    "IN (10,40,50,70) AND dra.roleid IN (5)) ra ON ra.userid = u.id WHERE quiza.preview = 0 AND quiza.id IS NOT NULL AND " .
+    "u.deleted = 0 AND u.id <> 1 AND u.deleted = 0";
 
     /**
      * The quiz being serialized
