@@ -71,6 +71,14 @@ class AssignmentSerializer
         ];
     }
 
+    /**
+     * Get the results from the assignment.
+     * 
+     * @param integer $courseId         The id of the course
+     * @param integer $courseModuleId   The id for the course module
+     * 
+     * @return array                    The results
+     */
     public function results($courseId, $courseModuleId)
     {
         $results = [];

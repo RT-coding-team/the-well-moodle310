@@ -67,6 +67,10 @@ class SurveySerializer
     /**
      * Get the results from the survey.  Adapted from code in mod/survey/download.php.
      * 
+     * @param integer $courseId         The id of the course
+     * @param integer $courseModuleId   The id for the course module
+     * 
+     * @return array                    The results
      */
     public function results($courseId, $courseModuleId)
     {
