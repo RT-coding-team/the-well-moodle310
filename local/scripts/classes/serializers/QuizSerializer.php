@@ -67,6 +67,7 @@ class QuizSerializer
         if (!$this->quiz) {
             return [];
         }
+
         return [
             'id'            =>  $this->quiz->id,
             'type'          =>  'quiz',
@@ -86,6 +87,10 @@ class QuizSerializer
      */
     public function results($courseId)
     {
+        if (!$this->quiz) {
+            return [];
+        }
+
         $results = [];
         $attempts = $this->db->get_records_sql(
             $this->query,

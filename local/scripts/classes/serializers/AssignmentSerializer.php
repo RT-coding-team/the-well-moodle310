@@ -81,6 +81,10 @@ class AssignmentSerializer
      */
     public function results($courseId, $courseModuleId)
     {
+        if (!$this->assignment) {
+            return [];
+        }
+
         $results = [];
         $context = context_module::instance($courseModuleId);
         $users = get_enrolled_users($context, "mod/assign:submit", 0, 'u.id');

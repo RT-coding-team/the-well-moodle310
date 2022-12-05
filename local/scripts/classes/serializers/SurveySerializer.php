@@ -74,6 +74,10 @@ class SurveySerializer
      */
     public function results($courseId, $courseModuleId)
     {
+        if (!$this->survey) {
+            return [];
+        }
+
         $results = [];
         // Get and collate all answers in a single array
         $answers = $this->db->get_records('survey_answers', ['survey'   =>  $this->survey->id], 'time ASC');
