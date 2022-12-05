@@ -16,14 +16,28 @@
 /**
  * Sync the current course tests and quiz reports with the cloud.
  *
- * If you want to use on command line, use `php sync_course_testing_reports.php`.
+ * If you want to use on command line, use `php sync_course_testing_reports.php API_URL API_TOKEN`.
  */
 define('CLI_SCRIPT', true);
+
+$url = '';
+$token = '';
+if ((isset($argv)) && (isset($argv[1]))) {
+    $url = $argv[1];
+}
+if ((isset($argv)) && (isset($argv[2]))) {
+    $token = $argv[2];
+}
+if (empty($url)) {
+    echo "\r\nYou must provide a valid API url to post the information to.\r\n";
+    exit;
+}
 
 set_time_limit(0);
 
 require_once(dirname(dirname(dirname(__FILE__))) . DIRECTORY_SEPARATOR . 'config.php');
 require_once(dirname(dirname(dirname(__FILE__))) . DIRECTORY_SEPARATOR . 'course' . DIRECTORY_SEPARATOR . 'lib.php');
+require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'CurlUtility.php');
 require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'serializers' . DIRECTORY_SEPARATOR . 'AssignmentSerializer.php');
 require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'serializers' . DIRECTORY_SEPARATOR . 'FeedbackSerializer.php');
 require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'serializers' . DIRECTORY_SEPARATOR . 'QuizSerializer.php');
@@ -34,7 +48,7 @@ $approvedActivities = ['assign', 'feedback', 'quiz', 'survey'];
 
 $assignments = [];
 $feedback = [];
-$quizes = [];
+$quizzes = [];
 $surveys = [];
 foreach ($courses as $course) {
     if (intval($course->id) === 1) {
@@ -85,7 +99,7 @@ foreach ($courses as $course) {
                 'activity'  =>  $activityDetails
             ];
             if ($activity->mod === 'quiz') {
-                $quizes[] = $data;
+                $quizzes[] = $data;
             } else if ($activity->mod === 'survey') {
                 $surveys[] = $data;
             } else if ($activity->mod === 'assign') {
@@ -100,7 +114,35 @@ echo "ASSIGNMENTS:\r\n";
 print_r(json_encode($assignments, JSON_NUMERIC_CHECK));
 echo "\r\nFEEDBACK:\r\n";
 print_r(json_encode($feedback, JSON_NUMERIC_CHECK));
-echo "\r\nQUIZES:\r\n";
-print_r(json_encode($quizes, JSON_NUMERIC_CHECK));
+echo "\r\nquizzes:\r\n";
+print_r(json_encode($quizzes, JSON_NUMERIC_CHECK));
 echo "\r\nSURVEYS:\r\n";
 print_r(json_encode($surveys, JSON_NUMERIC_CHECK));
+/**
+ * Send everything to the API
+ */
+$curl = new CurlUtility($url, $token);
+$curl->makeRequest('/lms/stats/assignments', 'POST', json_encode($assignments), null, true);
+if ($curl->responseCode === 200) {
+    echo "\r\nAssignments have been successfully sent to the API.\r\n";
+} else {
+    echo "\r\nError! Assignments were not sent to the API.\r\n";
+}
+$curl->makeRequest('/lms/stats/feedback', 'POST', json_encode($feedback), null, true);
+if ($curl->responseCode === 200) {
+    echo "\r\nFeedback has been successfully sent to the API.\r\n";
+} else {
+    echo "\r\nError! Feedback were not sent to the API.\r\n";
+}
+$curl->makeRequest('/lms/stats/quizzes', 'POST', json_encode($quizzes), null, true);
+if ($curl->responseCode === 200) {
+    echo "\r\nQuizzes have been successfully sent to the API.\r\n";
+} else {
+    echo "\r\nError! Quizzes were not sent to the API.\r\n";
+}
+$curl->makeRequest('/lms/stats/surveys', 'POST', json_encode($surveys), null, true);
+if ($curl->responseCode === 200) {
+    echo "\r\nSurveys have been successfully sent to the API.\r\n";
+} else {
+    echo "\r\nError! Surveys were not sent to the API.\r\n";
+}
