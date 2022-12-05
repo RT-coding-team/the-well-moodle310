@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 /**
- * Sync the current course tests and quiz reports with the cloud.
+ * Sync the current course tests and quiz reports with the local API.
  *
  * If you want to use on command line, use `php sync_course_testing_reports.php API_URL API_TOKEN`.
  */
