@@ -149,6 +149,10 @@ foreach ($courses as $course) {
         ];
     }
 }
+/**
+ * Send everything to the API
+ */
+$curl = new CurlUtility($url, $token);
 if (!empty($data)) {
     $lastSync = ($pulledLast) ? intval($pulledLast) : -1;
     $payload = [
@@ -157,5 +161,12 @@ if (!empty($data)) {
     ];
     echo "\r\nLOGS:\r\n";
     print_r(json_encode($payload, JSON_NUMERIC_CHECK));
+
+    $curl->makeRequest('/lms/stats/logs', 'POST', json_encode($payload), null, true);
+    if ($curl->responseCode === 200) {
+        echo "\r\nLogs have been successfully sent to the API.\r\n";
+        file_put_contents($pulledLogFile, time());
+    } else {
+        echo "\r\nError! Logs were not sent to the API.\r\n";
+    }
 }
-file_put_contents($pulledLogFile, time());
