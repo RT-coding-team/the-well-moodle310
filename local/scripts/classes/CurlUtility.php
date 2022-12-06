@@ -137,7 +137,7 @@ class CurlUtility
         );
 
 		// Add the authorization headers
-        if ($this->token) {
+        if (!empty($this->token)) {
             $headers[] = 'Authorization: Bearer ' . $this->token;
         }
 
@@ -180,7 +180,7 @@ class CurlUtility
     {
         $url = $this->url . '' . ltrim($sourcePath, '/');
 		$headers = [];
-        if ($this->token) {
+        if (!empty($this->token)) {
             $headers[] = 'Authorization: Bearer ' . $this->token;
         }		
         $write = fopen($destination, 'w+b');
