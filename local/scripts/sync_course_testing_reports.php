@@ -110,39 +110,51 @@ foreach ($courses as $course) {
         }
     }
 }
-echo "ASSIGNMENTS:\r\n";
-print_r(json_encode($assignments, JSON_NUMERIC_CHECK));
-echo "\r\nFEEDBACK:\r\n";
-print_r(json_encode($feedback, JSON_NUMERIC_CHECK));
-echo "\r\nquizzes:\r\n";
-print_r(json_encode($quizzes, JSON_NUMERIC_CHECK));
-echo "\r\nSURVEYS:\r\n";
-print_r(json_encode($surveys, JSON_NUMERIC_CHECK));
 /**
  * Send everything to the API
  */
 $curl = new CurlUtility($url, $token);
-$curl->makeRequest('/lms/stats/assignments', 'POST', json_encode($assignments), null, true);
-if ($curl->responseCode === 200) {
-    echo "\r\nAssignments have been successfully sent to the API.\r\n";
-} else {
-    echo "\r\nError! Assignments were not sent to the API.\r\n";
+if (!empty($assignments)) {
+    echo "ASSIGNMENTS:\r\n";
+    print_r(json_encode($assignments, JSON_NUMERIC_CHECK));
+
+    $curl->makeRequest('/lms/stats/assignments', 'POST', json_encode($assignments), null, true);
+    if ($curl->responseCode === 200) {
+        echo "\r\nAssignments have been successfully sent to the API.\r\n";
+    } else {
+        echo "\r\nError! Assignments were not sent to the API.\r\n";
+    }
 }
-$curl->makeRequest('/lms/stats/feedback', 'POST', json_encode($feedback), null, true);
-if ($curl->responseCode === 200) {
-    echo "\r\nFeedback has been successfully sent to the API.\r\n";
-} else {
-    echo "\r\nError! Feedback were not sent to the API.\r\n";
+if (!empty($feedback)) {
+    echo "\r\nFEEDBACK:\r\n";
+    print_r(json_encode($feedback, JSON_NUMERIC_CHECK));
+
+    $curl->makeRequest('/lms/stats/feedback', 'POST', json_encode($feedback), null, true);
+    if ($curl->responseCode === 200) {
+        echo "\r\nFeedback has been successfully sent to the API.\r\n";
+    } else {
+        echo "\r\nError! Feedback were not sent to the API.\r\n";
+    }
 }
-$curl->makeRequest('/lms/stats/quizzes', 'POST', json_encode($quizzes), null, true);
-if ($curl->responseCode === 200) {
-    echo "\r\nQuizzes have been successfully sent to the API.\r\n";
-} else {
-    echo "\r\nError! Quizzes were not sent to the API.\r\n";
+if (!empty($quizzes)) {
+    echo "\r\nQUIZZES:\r\n";
+    print_r(json_encode($quizzes, JSON_NUMERIC_CHECK));
+
+    $curl->makeRequest('/lms/stats/quizzes', 'POST', json_encode($quizzes), null, true);
+    if ($curl->responseCode === 200) {
+        echo "\r\nQuizzes have been successfully sent to the API.\r\n";
+    } else {
+        echo "\r\nError! Quizzes were not sent to the API.\r\n";
+    }
 }
-$curl->makeRequest('/lms/stats/surveys', 'POST', json_encode($surveys), null, true);
-if ($curl->responseCode === 200) {
-    echo "\r\nSurveys have been successfully sent to the API.\r\n";
-} else {
-    echo "\r\nError! Surveys were not sent to the API.\r\n";
+if (!empty($surveys)) {
+    echo "\r\nSURVEYS:\r\n";
+    print_r(json_encode($surveys, JSON_NUMERIC_CHECK));
+
+    $curl->makeRequest('/lms/stats/surveys', 'POST', json_encode($surveys), null, true);
+    if ($curl->responseCode === 200) {
+        echo "\r\nSurveys have been successfully sent to the API.\r\n";
+    } else {
+        echo "\r\nError! Surveys were not sent to the API.\r\n";
+    }
 }
