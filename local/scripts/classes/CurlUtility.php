@@ -137,7 +137,9 @@ class CurlUtility
         );
 
 		// Add the authorization headers
-		$headers[] = 'Authorization: Bearer ' . $this->token;
+        if ($this->token) {
+            $headers[] = 'Authorization: Bearer ' . $this->token;
+        }
 
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
@@ -178,7 +180,9 @@ class CurlUtility
     {
         $url = $this->url . '' . ltrim($sourcePath, '/');
 		$headers = [];
-		$headers[] = 'Authorization: Bearer ' . $this->boxId . $this->token;		
+        if ($this->token) {
+            $headers[] = 'Authorization: Bearer ' . $this->token;
+        }		
         $write = fopen($destination, 'w+b');
         //Here is the file we are downloading, replace spaces with %20
         $ch = curl_init(str_replace(' ', '%20', $url));
