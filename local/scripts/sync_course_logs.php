@@ -80,12 +80,12 @@ foreach ($courses as $course) {
         $where .= ' AND timecreated > ?';
         $params[] = $pulledLast;
     }
-    $iterator = $reader->get_events_select_iterator($where, $params, 'timecreated DESC', 0, 0);
+    $iterator = $reader->get_events_select_iterator($where, $params, 'timecreated ASC', 0, 0);
     $logs = [];
     foreach ($iterator as $item) {
         $extra = $item->get_logextra();
-        $origin = ($extra && array_key_exists('origin', $extra)) ? $extra['origin'] : '';
-        $ip = ($extra && array_key_exists('ip', $extra)) ? $extra['ip'] : '';
+        $origin = ($extra && array_key_exists('origin', $extra) && $extra['origin']) ? $extra['origin'] : '';
+        $ip = ($extra && array_key_exists('ip', $extra) && $extra['ip']) ? $extra['ip'] : '';
         $log = [
             'action'        =>  $item->action,
             'component'     =>  $item->component,
@@ -150,7 +150,12 @@ foreach ($courses as $course) {
     }
 }
 if (!empty($data)) {
-    echo "\r\LOGS:\r\n";
-    print_r(json_encode($data, JSON_NUMERIC_CHECK));
+    $lastSync = ($pulledLast) ? intval($pulledLast) : -1;
+    $payload = [
+        'data'      =>  $data,
+        'last_sync' =>  $lastSync
+    ];
+    echo "\r\nLOGS:\r\n";
+    print_r(json_encode($payload, JSON_NUMERIC_CHECK));
 }
 file_put_contents($pulledLogFile, time());
