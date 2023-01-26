@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  moodle_db:
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_DB=${DB_DATABASE}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    ports:
+      - '5432:5432'
+    volumes: 
+      - psql_db:/var/lib/postgresql/data
+      - ./_docker/db/init/moodle-backup.sql:/docker-entrypoint-initdb.d/moodle-backup.sql
+
+volumes:
+  psql_db:
+    driver: local
