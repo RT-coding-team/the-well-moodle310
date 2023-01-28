@@ -149,7 +149,7 @@ $CFG->wwwroot   = getenv('MOODLE_WEBROOT');
 //
 // - On Windows systems you might specify something like 'c:\moodledata'
 
-$CFG->dataroot  = getenv('MOODLE_DATA_ROOT');
+$CFG->dataroot  = "/moodledata/moodledata";
 
 
 //=========================================================================

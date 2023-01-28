@@ -34,7 +34,7 @@ services:
     working_dir: /var/www/html
     volumes:
       - ./:/var/www/html
-      - ./_docker/moodledata:${MOODLE_DATA_ROOT}
+      - ./_docker/moodledata:/moodledata/moodledata
       - ./_docker/php/conf.d/custom-php.ini:/usr/local/etc/php/conf.d/custom-php.ini
     networks:
       - moodle_platform
