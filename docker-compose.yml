@@ -30,7 +30,6 @@ services:
       - MOODLE_DBNAME=${DB_DATABASE}
       - MOODLE_DB_TABLE_PREFIX=${DB_TABLE_PREFIX}
       - MOODLE_WEBROOT=${MOODLE_WEBROOT}
-      - MOODLE_DATA_ROOT=${MOODLE_DATA_ROOT}
     working_dir: /var/www/html
     volumes:
       - ./:/var/www/html
