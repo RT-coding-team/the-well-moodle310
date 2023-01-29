@@ -135,7 +135,6 @@ $CFG->dboptions = array(
 
 $CFG->wwwroot   = getenv('MOODLE_WEBROOT');
 
-
 //=========================================================================
 // 3. DATA FILES LOCATION
 //=========================================================================
@@ -1088,7 +1087,12 @@ $CFG->admin = 'admin';
 // ALL DONE!  To continue installation, visit your main page with a browser
 //=========================================================================
 
+// This stops a check that breaks because of our docker proxy
+$CFG->reverseproxy = true;
 require_once(__DIR__ . '/lib/setup.php'); // Do not edit
+// This fixes an issue with docker environment variables adding quotes.
+// This must happen after the require or it loops.
+$CFG->wwwroot = str_replace('"', "", $CFG->wwwroot);
 
 // There is no php closing tag in this file,
 // it is intentional because it prevents trailing whitespace problems!
