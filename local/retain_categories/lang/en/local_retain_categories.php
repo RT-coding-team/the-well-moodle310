@@ -13,20 +13,10 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
- * Our versioning file
+ * Localization file
  */
-/**
- * Required version of Moodle 3.7
- *
- */
-$plugin->requires = 2019052000;
-/**
- * Our version number
- *
- */
-$plugin->version = 10100;
-$plugin->component = 'local_module_icons';
-$plugin->cron = 0;
-$plugin->release = '1.1.0 (Build: 10100)';
-$plugin->maturity = MATURITY_STABLE;
+defined('MOODLE_INTERNAL') || die();
+
+$string['pluginname'] = 'Retain Categories';
