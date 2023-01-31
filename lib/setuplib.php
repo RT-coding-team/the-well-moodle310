@@ -900,7 +900,7 @@ function initialise_fullme() {
 
     // hopefully this will stop all those "clever" admins trying to set up moodle
     // with two different addresses in intranet and Internet
-    if (!empty($CFG->reverseproxy) && $rurl['host'] === $wwwroot['host']) {
+    if (!empty($CFG->reverseproxy) && $rurl['host'] === $wwwroot['host'] && $rurl['port'] === $wwwroot['port']) {
         print_error('reverseproxyabused', 'error');
     }
 
@@ -954,6 +954,8 @@ function setup_get_remote_url() {
     $rurl['port'] = $_SERVER['SERVER_PORT'];
     $rurl['path'] = $_SERVER['SCRIPT_NAME']; // Script path without slash arguments
     $rurl['scheme'] = (empty($_SERVER['HTTPS']) or $_SERVER['HTTPS'] === 'off' or $_SERVER['HTTPS'] === 'Off' or $_SERVER['HTTPS'] === 'OFF') ? 'http' : 'https';
+    //@link https://stackoverflow.com/a/47025598
+    //$rurl['scheme'] = isset($_SERVER['HTTP_X_FORWARDED_PROTO']) ? $_SERVER['HTTP_X_FORWARDED_PROTO'] : ((isset( $_SERVER["HTTPS"]) && strtolower($_SERVER["HTTPS"]) == 'on') ? 'https' : 'http');
 
     if (stripos($_SERVER['SERVER_SOFTWARE'], 'apache') !== false) {
         //Apache server
