@@ -20,15 +20,26 @@ RUN apt-get update && apt-get install -y \
     curl \
     libzip-dev \
     libxml2-dev \
+    libjpeg-dev \
+    libmcrypt-dev \
+    libonig-dev \
+    libwebp-dev \
     nano
+
+RUN pecl install mcrypt-1.0.6 \
+    docker-php-ext-enable mcrypt-1.0.6
+
 
 # Enable psql in PHP
 # https://github.com/docker-library/php/issues/221
 RUN docker-php-ext-configure pgsql -with-pgsql=/usr/local/pgsql \
-    && docker-php-ext-install pdo pdo_pgsql pgsql
+    && docker-php-ext-install pdo pdo_pgsql pgsql iconv \
+    && docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-install gd \
+    && docker-php-ext-install mbstring \
+    && docker-php-ext-enable gd
 
 # Install Extensions
-RUN docker-php-ext-install gd
 RUN docker-php-ext-install zip
 RUN docker-php-ext-install intl
 RUN docker-php-ext-install xmlrpc
