@@ -22,6 +22,11 @@ require_once(dirname(dirname(dirname(dirname(dirname(__FILE__))))) . DIRECTORY_S
 class SurveySerializer
 {
     /**
+     * The type of survey. This is only set after results is called because
+     * the type is determined from the survey_questions table.
+     */
+    public $surveyType = '';
+    /**
      * An instance of Moodle's database
      */
     protected $db = null;
@@ -30,6 +35,16 @@ class SurveySerializer
      * The survey being serialized
      */
     protected $survey;
+
+    /**
+     * This is used to determine the type of survey. We use the first three letters of the
+     * survey_questions.text to determine the type of survey.
+     */
+    protected $surveyTypes = [
+        'att'   =>  'ATTLS',
+        'col'   =>  'COLLES',
+        'ciq'   =>  'CI'
+    ];
 
     /**
      * Build the class
@@ -53,7 +68,6 @@ class SurveySerializer
         if (!$this->survey) {
             return [];
         }
-
         return [
             'id'            =>  $this->survey->id,
             'type'          =>  'survey',
@@ -96,7 +110,18 @@ class SurveySerializer
         $orderedQuestions = [];
         // Not sure why they use this?
         $isVirtualScale = false;
+        // To get the survey type, we look at the first three letters of the survey_questions.text field
+        // It helps us determine it.
+        $typeKeys = array_keys($this->surveyTypes);
         foreach ($order as $id) {
+            // We need to set type of survey
+            $key = substr($questions[$id]->text, 0, 3);
+            if (
+                (empty($this->surveyType)) &&
+                (in_array($key, $typeKeys))
+            ) {
+                $this->surveyType = $this->surveyTypes[$key];
+            }
             $orderedQuestions[$id] = $questions[$id];
             if (!$isVirtualScale && $questions[$id]->type < 0) {
                 $isVirtualScale = true;

@@ -80,6 +80,7 @@ foreach ($courses as $course) {
             if (!empty($activityDetails)) {
                 $activityDetails['results'] = $serializer->results($course->id, $activity->cm);
             }
+            $activityDetails['survey_type'] = $serializer->surveyType;
         } else if ($activity->mod === 'assign') {
             $serializer = new AssignmentSerializer($activity->id, $DB);
             $activityDetails = $serializer->details();
