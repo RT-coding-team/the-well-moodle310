@@ -80,6 +80,7 @@ foreach ($courses as $course) {
             if (!empty($activityDetails)) {
                 $activityDetails['results'] = $serializer->results($course->id, $activity->cm);
             }
+            $activityDetails['survey_type'] = $serializer->surveyType;
         } else if ($activity->mod === 'assign') {
             $serializer = new AssignmentSerializer($activity->id, $DB);
             $activityDetails = $serializer->details();
@@ -118,8 +119,8 @@ if (!empty($assignments)) {
     echo "ASSIGNMENTS:\r\n";
     print_r(json_encode($assignments, JSON_NUMERIC_CHECK));
 
-    $curl->makeRequest('/lms/stats/assignments', 'POST', json_encode($assignments), null, true);
-    if ($curl->responseCode === 200) {
+    $curl->makeRequest('/api/lms/stats/assignments', 'POST', json_encode($assignments), null, true);
+    if ($curl->responseCode === 201) {
         echo "\r\nAssignments have been successfully sent to the API.\r\n";
     } else {
         echo "\r\nError! Assignments were not sent to the API.\r\n";
@@ -129,8 +130,8 @@ if (!empty($feedback)) {
     echo "\r\nFEEDBACK:\r\n";
     print_r(json_encode($feedback, JSON_NUMERIC_CHECK));
 
-    $curl->makeRequest('/lms/stats/feedback', 'POST', json_encode($feedback), null, true);
-    if ($curl->responseCode === 200) {
+    $curl->makeRequest('/api/lms/stats/feedback', 'POST', json_encode($feedback), null, true);
+    if ($curl->responseCode === 201) {
         echo "\r\nFeedback has been successfully sent to the API.\r\n";
     } else {
         echo "\r\nError! Feedback were not sent to the API.\r\n";
@@ -140,8 +141,8 @@ if (!empty($quizzes)) {
     echo "\r\nQUIZZES:\r\n";
     print_r(json_encode($quizzes, JSON_NUMERIC_CHECK));
 
-    $curl->makeRequest('/lms/stats/quizzes', 'POST', json_encode($quizzes), null, true);
-    if ($curl->responseCode === 200) {
+    $curl->makeRequest('/api/lms/stats/quizzes', 'POST', json_encode($quizzes), null, true);
+    if ($curl->responseCode === 201) {
         echo "\r\nQuizzes have been successfully sent to the API.\r\n";
     } else {
         echo "\r\nError! Quizzes were not sent to the API.\r\n";
@@ -151,8 +152,8 @@ if (!empty($surveys)) {
     echo "\r\nSURVEYS:\r\n";
     print_r(json_encode($surveys, JSON_NUMERIC_CHECK));
 
-    $curl->makeRequest('/lms/stats/surveys', 'POST', json_encode($surveys), null, true);
-    if ($curl->responseCode === 200) {
+    $curl->makeRequest('/api/lms/stats/surveys', 'POST', json_encode($surveys), null, true);
+    if ($curl->responseCode === 201) {
         echo "\r\nSurveys have been successfully sent to the API.\r\n";
     } else {
         echo "\r\nError! Surveys were not sent to the API.\r\n";
