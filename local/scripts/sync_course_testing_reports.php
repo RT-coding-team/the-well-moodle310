@@ -50,10 +50,12 @@ $assignments = [];
 $feedback = [];
 $quizzes = [];
 $surveys = [];
+$ids = [];
 foreach ($courses as $course) {
     if (intval($course->id) === 1) {
         continue;
     }
+    $ids[] = $course->id;
     $courseDetails = [
         'id'            =>  $course->id,
         'fullname'      =>  $course->fullname,
@@ -115,6 +117,14 @@ foreach ($courses as $course) {
  * Send everything to the API
  */
 $curl = new CurlUtility($url, $token);
+echo "SYNCING COURSES:\r\n";
+print_r(json_encode($ids, JSON_NUMERIC_CHECK));
+$curl->makeRequest('/api/lms/stats/sync-courses', 'POST', json_encode($ids), null, true);
+if ($curl->responseCode === 201) {
+    echo "\r\nCourses have been successfully synced to the API.\r\n";
+} else {
+    echo "\r\nError! Courses were not synced to the API.\r\n";
+}
 if (!empty($assignments)) {
     echo "ASSIGNMENTS:\r\n";
     print_r(json_encode($assignments, JSON_NUMERIC_CHECK));
