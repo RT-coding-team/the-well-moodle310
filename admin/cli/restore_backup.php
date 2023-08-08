@@ -94,8 +94,7 @@ cli_heading(get_string('preprocessingbackupfile'));
 try {
     list($fullname, $shortname) = restore_dbops::calculate_course_names(0, get_string('restoringcourse', 'backup'),
         get_string('restoringcourseshortname', 'backup'));
-
-    $courseid = restore_dbops::create_new_course($fullname . "-derek", $shortname . "derek", $category->id);
+    $courseid = restore_dbops::create_new_course($fullname, $shortname, $category->id);
 
     $rc = new restore_controller($backupdir, $courseid, backup::INTERACTIVE_NO,
         backup::MODE_GENERAL, $admin->id, backup::TARGET_NEW_COURSE);
@@ -104,7 +103,7 @@ try {
     $rc->destroy();
 
 	// Added by Derek Maxson 20210413 -- allows a suffix to be added to the course name
-	if (isset($options['suffix'])) {
+	if ((isset($options['suffix'])) && (!empty($options['suffix']))) {
 		echo "Adding Suffix: " . $options['suffix'] . "\n";
 		# Older versions of PHP don't have the function, so we will make one 
 		if (!function_exists('str_contains')) {
