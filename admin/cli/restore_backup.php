@@ -113,17 +113,17 @@ try {
 		}    
 
 		# Get existing course names and modify them: (1) take out the copy stuff, (2) add the suffix
-		$chats = $DB->get_record('course', array('id'=>$courseid), 'fullname,shortname', MUST_EXIST);
-		if (str_contains($chats->fullname,' copy ')) {
-			$chats->fullname = substr($chats->fullname, 0, strpos($chats->fullname, " copy "));
-			$chats->shortname = substr($chats->shortname, 0, strpos($chats->shortname, "_"));	
+		$course = $DB->get_record('course', array('id'=>$courseid), 'fullname,shortname', MUST_EXIST);
+		if (str_contains($course->fullname,' copy ')) {
+			$course->fullname = substr($course->fullname, 0, strpos($course->fullname, " copy "));
+			$course->shortname = substr($course->shortname, 0, strpos($course->shortname, "_"));	
 		}
-		$chats->fullname = $chats->fullname . ' ' . $options['suffix'];
-		$chats->shortname = $chats->shortname . ' ' . $options['suffix'];
+		$course->fullname = $course->fullname . ' ' . $options['suffix'];
+		$course->shortname = $course->shortname . ' ' . $options['suffix'];
 
 		# Update the database course names via SQL
 		$updatesql = "UPDATE mdl_course SET fullname = :fullname, shortname = :shortname WHERE id = :courseid";
-		$params = ['fullname' => $chats->fullname, 'shortname' => $chats->shortname,'courseid' => $courseid];
+		$params = ['fullname' => $course->fullname, 'shortname' => $course->shortname,'courseid' => $courseid];
 		$DB->execute($updatesql, $params);
 	}
 } catch (Exception $e) {
