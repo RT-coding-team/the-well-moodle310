@@ -127,6 +127,12 @@ try {
 		$DB->execute($updatesql, $params);
 	}
 } catch (Exception $e) {
+    if (isset($courseid)) {
+        /**
+         * The course was saved, but then failed to be restored. Let's delete it.
+         */
+        delete_course($courseid);
+    }
     cli_heading(get_string('cleaningtempdata'));
     fulldelete($path);
     print_error('generalexceptionmessage', 'error', '', $e->getMessage());
