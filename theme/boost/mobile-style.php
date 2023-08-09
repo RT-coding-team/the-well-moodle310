@@ -1,6 +1,10 @@
 <?php
 require_once(dirname(dirname(dirname(__FILE__))) . DIRECTORY_SEPARATOR . 'config.php');
 $brandColor = get_config('theme_boost', 'brandcolor');
+$greyColor = '#E7E9EB';
+$blueColor = '#96D2DC';
+$purpleColor = '#CDCBE6';
+$ultraColor = '#0F009B';
 header("Content-type: text/css");
 ?>
 /* 3.5 styles */
@@ -24,11 +28,11 @@ header("Content-type: text/css");
 .tabs-wp .tab-button .tab-button-icon,
 .tabs-wp .core-tabs-bar a.tab-slide .tab-button-icon,
 .core-tabs-bar .tabs-wp a.tab-slide .tab-button-icon {
-  color: #B7B7B7;
+  color: <?php echo $purpleColor; ?> !important;
 }
 .core-tabs-bar .slides a.tab-slide {
-  color: #B7B7B7 !important;
-  border-bottom-color: #B7B7B7 !important;
+  color: <?php echo $purpleColor; ?> !important;
+  border-bottom-color: <?php echo $purpleColor; ?> !important;
 }
 
 /* Bottom tabs selected color */
@@ -41,7 +45,7 @@ header("Content-type: text/css");
 .tabs-wp .tab-button[aria-selected=true] .tab-button-icon,
 .tabs-wp .core-tabs-bar a[aria-selected=true].tab-slide .tab-button-icon,
 .core-tabs-bar .tabs-wp a[aria-selected=true].tab-slide .tab-button-icon {
-  color: #FFFFFF;
+  color: #FFFFFF !important;
 }
 
 ion-app.app-root.md .button-md-light,
@@ -69,6 +73,10 @@ ion-app.app-root ion-select.core-button-select .select-icon .select-icon-inner, 
     color: <?php echo $brandColor; ?> !important;
 }
 
+.radio-md .radio-icon,
+.radio-ios .radio-icon {
+    border-color: <?php echo $purpleColor; ?> !important;
+}
 .radio-md .radio-checked,
 .radio-ios .radio-checked {
     border-color: <?php echo $brandColor; ?> !important;
@@ -81,12 +89,12 @@ ion-app.app-root ion-select.core-button-select .select-icon .select-icon-inner, 
 
 .toggle-md .toggle-icon,
 .toggle-ios .toggle-icon {
-    background-color: #B7B7B7 !important;
+    background-color: <?php echo $greyColor; ?> !important;
 }
 
 .toggle-md .toggle-inner,
 .toggle-ios .toggle-inner {
-    background-color: #B1B1B1 !important;
+    background-color: <?php echo $greyColor; ?> !important;
 }
 
 .toggle-md.toggle-checked .toggle-inner,
@@ -96,7 +104,7 @@ ion-app.app-root ion-select.core-button-select .select-icon .select-icon-inner, 
 
 .toggle-md.toggle-checked .toggle-icon,
 .toggle-ios.toggle-checked .toggle-icon {
-    background-color: #808080 !important;
+    background-color: <?php echo $purpleColor; ?> !important;
 }
 
 /* Loading spinner */
@@ -131,7 +139,7 @@ ion-app.app-root ion-select.core-button-select .select-icon .select-icon-inner, 
 .button-outline-ios,
 .button-outline-wp {
     border-color: <?php echo $brandColor; ?>;
-    background-color: #ffffff;
+    background-color: #FFFFFF !important;
     color: <?php echo $brandColor; ?>;
 }
 
@@ -224,7 +232,7 @@ ion-app.app-root ion-action-sheet .action-sheet-wrapper .action-sheet-container 
 }
 
 ion-app.app-root ion-action-sheet .action-sheet-wrapper .action-sheet-container .action-sheet-button.action-sheet-cancel {
-    color: #808080 !important;
+    color: <?php echo $blueColor; ?> !important;
 }
 
 .action-sheet-md .action-sheet-title {
