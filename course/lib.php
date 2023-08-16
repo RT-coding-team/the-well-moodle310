@@ -514,7 +514,7 @@ function get_array_of_activities($courseid) {
                            }
                        }
                    }
-                   if (!$mod[$seq]->icon) {
+                   if ((!property_exists($mod[$seq], 'icon')) || (!$mod[$seq]->icon)) {
                        /**
                         * Catch activities that haven't set an icon yet, and check
                         * if they have a custom icon
