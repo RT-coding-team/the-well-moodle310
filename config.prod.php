@@ -1088,7 +1088,7 @@ $CFG->admin = 'admin';
 //=========================================================================
 
 // This stops a check that breaks because of our docker proxy
-$CFG->reverseproxy = true;
+// $CFG->reverseproxy = true;
 require_once(__DIR__ . '/lib/setup.php'); // Do not edit
 // This fixes an issue with docker environment variables adding quotes.
 // This must happen after the require or it loops.
