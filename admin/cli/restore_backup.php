@@ -94,8 +94,7 @@ cli_heading(get_string('preprocessingbackupfile'));
 try {
     list($fullname, $shortname) = restore_dbops::calculate_course_names(0, get_string('restoringcourse', 'backup'),
         get_string('restoringcourseshortname', 'backup'));
-
-    $courseid = restore_dbops::create_new_course($fullname . "-derek", $shortname . "derek", $category->id);
+    $courseid = restore_dbops::create_new_course($fullname, $shortname, $category->id);
 
     $rc = new restore_controller($backupdir, $courseid, backup::INTERACTIVE_NO,
         backup::MODE_GENERAL, $admin->id, backup::TARGET_NEW_COURSE);
@@ -104,7 +103,7 @@ try {
     $rc->destroy();
 
 	// Added by Derek Maxson 20210413 -- allows a suffix to be added to the course name
-	if (isset($options['suffix'])) {
+	if ((isset($options['suffix'])) && (!empty($options['suffix']))) {
 		echo "Adding Suffix: " . $options['suffix'] . "\n";
 		# Older versions of PHP don't have the function, so we will make one 
 		if (!function_exists('str_contains')) {
@@ -114,20 +113,26 @@ try {
 		}    
 
 		# Get existing course names and modify them: (1) take out the copy stuff, (2) add the suffix
-		$chats = $DB->get_record('course', array('id'=>$courseid), 'fullname,shortname', MUST_EXIST);
-		if (str_contains($chats->fullname,' copy ')) {
-			$chats->fullname = substr($chats->fullname, 0, strpos($chats->fullname, " copy "));
-			$chats->shortname = substr($chats->shortname, 0, strpos($chats->shortname, "_"));	
+		$course = $DB->get_record('course', array('id'=>$courseid), 'fullname,shortname', MUST_EXIST);
+		if (str_contains($course->fullname,' copy ')) {
+			$course->fullname = substr($course->fullname, 0, strpos($course->fullname, " copy "));
+			$course->shortname = substr($course->shortname, 0, strpos($course->shortname, "_"));	
 		}
-		$chats->fullname = $chats->fullname . ' ' . $options['suffix'];
-		$chats->shortname = $chats->shortname . ' ' . $options['suffix'];
+		$course->fullname = $course->fullname . ' ' . $options['suffix'];
+		$course->shortname = $course->shortname . ' ' . $options['suffix'];
 
 		# Update the database course names via SQL
 		$updatesql = "UPDATE mdl_course SET fullname = :fullname, shortname = :shortname WHERE id = :courseid";
-		$params = ['fullname' => $chats->fullname, 'shortname' => $chats->shortname,'courseid' => $courseid];
+		$params = ['fullname' => $course->fullname, 'shortname' => $course->shortname,'courseid' => $courseid];
 		$DB->execute($updatesql, $params);
 	}
 } catch (Exception $e) {
+    if (isset($courseid)) {
+        /**
+         * The course was saved, but then failed to be restored. Let's delete it.
+         */
+        delete_course($courseid);
+    }
     cli_heading(get_string('cleaningtempdata'));
     fulldelete($path);
     print_error('generalexceptionmessage', 'error', '', $e->getMessage());
