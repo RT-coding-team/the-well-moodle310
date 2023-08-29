@@ -28,11 +28,12 @@ services:
     networks:
       - twc-moodle-production-network
     volumes:
-      - ./_docker/nginx/nginx.production.conf:/etc/nginx/nginx.conf
+      - ./_docker/nginx/conf.d/nginx.production.conf:/etc/nginx/nginx.conf
       - ../moodledata/Production/:/var/www/moodledata 
 
 networks:
   twc-moodle-production-network:
+    name: twc-moodle-production-network
     driver: bridge
 
 volumes:
