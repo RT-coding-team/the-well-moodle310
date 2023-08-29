@@ -45,5 +45,4 @@ RUN docker-php-ext-install intl
 RUN docker-php-ext-install xmlrpc
 RUN docker-php-ext-install soap
 
-EXPOSE 9000
 CMD ["php-fpm"]

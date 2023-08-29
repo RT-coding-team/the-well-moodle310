@@ -1,62 +1,26 @@
 version: '3.4'
 
 services:
+
   moodle_db:
     image: postgres:14.1-alpine
-    networks:
-      - moodle_platform
-    restart: always
-    environment:
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_DB=${DB_DATABASE}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-    ports:
-      - '5432:5432'
-    volumes: 
-      - psql_db:/var/lib/postgresql/data
-      - ./_docker/db/init/moodle-backup.sql:/docker-entrypoint-initdb.d/moodle-backup.sql
+    restart: unless-stopped
 
   moodle_site:
     build:
       context: .
       dockerfile: ./_docker/php-build
     restart: unless-stopped
-    environment:
-      - MOODLE_DBTYPE=${DB_TYPE}
-      - MOODLE_DBHOST=moodle_db
-      - MOODLE_DBPORT=${DB_PORT}
-      - MOODLE_DBUSER=${DB_USER}
-      - MOODLE_DBPASS=${DB_PASSWORD}
-      - MOODLE_DBNAME=${DB_DATABASE}
-      - MOODLE_DB_TABLE_PREFIX=${DB_TABLE_PREFIX}
-      - MOODLE_WEBROOT=${MOODLE_WEBROOT}
+    container_name: twc-moodle-site-staging
     working_dir: /var/www/html
     volumes:
       - ./:/var/www/html
-      - ./_docker/moodledata:/moodledata/moodledata
       - ./_docker/php/conf.d/custom-php.ini:/usr/local/etc/php/conf.d/custom-php.ini
-    networks:
-      - moodle_platform
     depends_on:
       - moodle_db
   
   moodle_nginx:
-    image: nginx:alpine
+    image: nginx:latest
     restart: unless-stopped
-    ports:
-      - target: 80
-        published: ${NGINX_EXPOSE_PORT}
-        protocol: tcp
     volumes:
       - ./:/var/www/html
-      - ./_docker/nginx/conf.d/:/etc/nginx/conf.d/
-    networks:
-      - moodle_platform
-
-networks:
-  moodle_platform:
-    driver: bridge
-
-volumes:
-  psql_db:
-    driver: local
