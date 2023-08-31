@@ -41,9 +41,9 @@ $CFG = new stdClass();
 $CFG->dbtype    = getenv('MOODLE_DBTYPE');      // 'pgsql', 'mariadb', 'mysqli', 'sqlsrv' or 'oci'
 $CFG->dblibrary = 'native';     // 'native' only at the moment
 $CFG->dbhost    = getenv('MOODLE_DBHOST');  // eg 'localhost' or 'db.isp.com' or IP
-$CFG->dbname    = getenv('MOODLE_DBNAME');     // database name, eg moodle
-$CFG->dbuser    = getenv('MOODLE_DBUSER');   // your database username
-$CFG->dbpass    = getenv('MOODLE_DBPASS');   // your database password
+$CFG->dbname    = getenv('POSTGRES_DB');     // database name, eg moodle
+$CFG->dbuser    = getenv('POSTGRES_USER');   // your database username
+$CFG->dbpass    = getenv('POSTGRES_PASSWORD');   // your database password
 $CFG->prefix    = getenv('MOODLE_DB_TABLE_PREFIX'); // prefix to use for all table names
 
 $CFG->dboptions = array(
@@ -148,7 +148,7 @@ $CFG->wwwroot   = getenv('MOODLE_WEBROOT');
 //
 // - On Windows systems you might specify something like 'c:\moodledata'
 
-$CFG->dataroot  = "/moodledata/moodledata";
+$CFG->dataroot  = getenv('MOODLE_DATAROOT');
 
 
 //=========================================================================
